@@ -4,24 +4,42 @@ import { supabase } from '../supabaseClient';
 
 const AuthModal = ({ onClose }) => {
     const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [isSignUp, setIsSignUp] = useState(false);
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
 
-    const handleLogin = async (e) => {
+    const handleAuth = async (e) => {
         e.preventDefault();
 
         if (!supabase) {
-            setMessage("Error: Supabase not configured. Missing Environment Variables.");
+            setMessage("Error: Supabase not configured.");
             return;
         }
 
         setLoading(true);
-        const { error } = await supabase.auth.signInWithOtp({ email });
+        let error;
+
+        if (isSignUp) {
+            const { error: signUpError } = await supabase.auth.signUp({
+                email,
+                password
+            });
+            error = signUpError;
+            if (!error) setMessage('Account created! Please check your email to confirm specific settings or just log in if disabled.');
+        } else {
+            const { error: signInError } = await supabase.auth.signInWithPassword({
+                email,
+                password
+            });
+            error = signInError;
+        }
 
         if (error) {
             setMessage(`Error: ${error.message}`);
-        } else {
-            setMessage('Magic link sent to your email!');
+        } else if (!isSignUp) {
+            // Login successful, modal will close via App.js state change or we can force it
+            onClose();
         }
         setLoading(false);
     };
@@ -36,15 +54,22 @@ const AuthModal = ({ onClose }) => {
                 background: 'white', padding: '40px', borderRadius: '12px', width: '400px',
                 display: 'flex', flexDirection: 'column', gap: '20px', textAlign: 'center'
             }}>
-                <h2>Login / Sign Up</h2>
-                <p>Enter your email to receive a Magic Link to log in.</p>
+                <h2>{isSignUp ? 'Create Account' : 'Login'}</h2>
 
-                <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                <form onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                     <input
                         type="email"
-                        placeholder="your@email.com"
+                        placeholder="Email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
+                        style={{ padding: '12px', borderRadius: '6px', border: '1px solid #ddd' }}
+                        required
+                    />
+                    <input
+                        type="password"
+                        placeholder="Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
                         style={{ padding: '12px', borderRadius: '6px', border: '1px solid #ddd' }}
                         required
                     />
@@ -56,11 +81,21 @@ const AuthModal = ({ onClose }) => {
                             border: 'none', borderRadius: '6px', cursor: loading ? 'wait' : 'pointer', fontWeight: '600'
                         }}
                     >
-                        {loading ? 'Sending...' : 'Send Magic Link'}
+                        {loading ? 'Processing...' : (isSignUp ? 'Sign Up' : 'Log In')}
                     </button>
                 </form>
 
                 {message && <p style={{ color: message.includes('Error') ? 'red' : 'green' }}>{message}</p>}
+
+                <div style={{ fontSize: '0.9em', color: '#666' }}>
+                    {isSignUp ? "Already have an account? " : "Don't have an account? "}
+                    <button
+                        onClick={() => { setIsSignUp(!isSignUp); setMessage(''); }}
+                        style={{ background: 'none', border: 'none', color: 'blue', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+                    >
+                        {isSignUp ? 'Log In' : 'Sign Up'}
+                    </button>
+                </div>
 
                 <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#888', cursor: 'pointer' }}>
                     Close
