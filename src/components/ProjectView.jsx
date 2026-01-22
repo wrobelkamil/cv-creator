@@ -3,8 +3,6 @@ import { supabase } from '../supabaseClient';
 import { useParams, Link } from 'react-router-dom';
 import CVLayout from './CVLayout';
 import ExperienceEditor from './ExperienceEditor';
-// We might not need PromptBuilder here directly if we use the backend approach, 
-// but keeping it for manual "Copy Prompt" workflow if needed.
 import { staticData } from '../data/staticData';
 
 const ProjectView = ({ session }) => {
@@ -12,15 +10,14 @@ const ProjectView = ({ session }) => {
     const [project, setProject] = useState(null);
     const [projectEntries, setProjectEntries] = useState([]);
     const [isEditorOpen, setIsEditorOpen] = useState(false);
+    const [editingEntry, setEditingEntry] = useState(null);
 
     useEffect(() => {
         fetchProjectData();
 
-        // Realtime for THIS project
         const channel = supabase
             .channel(`project:${projectId}`)
             .on('postgres_changes', { event: '*', schema: 'public', table: 'project_entries', filter: `project_id=eq.${projectId}` }, (payload) => {
-                console.log('Project update:', payload);
                 fetchProjectData();
             })
             .subscribe();
@@ -29,26 +26,35 @@ const ProjectView = ({ session }) => {
     }, [projectId]);
 
     const fetchProjectData = async () => {
-        // 1. Get Project Info
         const { data: projData } = await supabase.from('projects').select('*').eq('id', projectId).single();
         setProject(projData);
 
-        // 2. Get Entries
         const { data: entriesData } = await supabase
             .from('project_entries')
             .select('*')
-            .eq('project_id', projectId) // Filter by Project
-            .order('created_at', { ascending: false }); // Or sort logic
+            .eq('project_id', projectId)
+            .order('created_at', { ascending: false });
 
         if (entriesData) setProjectEntries(entriesData);
+    };
+
+    const deleteEntry = async (id) => {
+        if (!window.confirm("Are you sure you want to delete this entry?")) return;
+
+        const { error } = await supabase
+            .from('project_entries')
+            .delete()
+            .eq('id', id);
+
+        if (error) alert("Error deleting: " + error.message);
+        else fetchProjectData();
     };
 
     // Construct Data for CVLayout
     const fullData = {
         ...staticData,
-        // Overwrite experience with Project Entries
-        experience: projectEntries.length > 0 ? projectEntries : [], // If empty, shows empty list
-        masterExperience: projectEntries, // For context if needed
+        experience: projectEntries.length > 0 ? projectEntries : [],
+        masterExperience: projectEntries,
     };
 
     const copyToken = () => {
@@ -76,12 +82,17 @@ const ProjectView = ({ session }) => {
                 </div>
             </div>
 
-            <CVLayout data={fullData} />
+            <CVLayout
+                data={fullData}
+                isEditable={true}
+                onEdit={(entry) => { setEditingEntry(entry); setIsEditorOpen(true); }}
+                onDelete={deleteEntry}
+            />
 
             {/* Floating Buttons */}
             <div className="no-print" style={{ position: 'fixed', bottom: '20px', right: '20px', display: 'flex', flexDirection: 'column', gap: '15px', zIndex: 100 }}>
                 <button
-                    onClick={() => setIsEditorOpen(true)}
+                    onClick={() => { setEditingEntry(null); setIsEditorOpen(true); }}
                     style={{
                         background: '#f59e0b', color: 'white', border: 'none', borderRadius: '50px',
                         width: '60px', height: '60px', fontSize: '24px', cursor: 'pointer', boxShadow: '0 4px 10px rgba(0,0,0,0.3)'
@@ -96,8 +107,9 @@ const ProjectView = ({ session }) => {
 
             {isEditorOpen && (
                 <ExperienceEditor
-                    projectId={projectId} // Pass Project ID to Editor
-                    onClose={() => setIsEditorOpen(false)}
+                    projectId={projectId}
+                    initialData={editingEntry}
+                    onClose={() => { setIsEditorOpen(false); setEditingEntry(null); }}
                     onSuccess={() => fetchProjectData()}
                 />
             )}
