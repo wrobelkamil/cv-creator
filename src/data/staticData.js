@@ -5,7 +5,7 @@ export const staticData = {
         email: "wrobel.k@icloud.com",
         phone: "501-608-599",
         portfolio: "kamilwrobel.netlify.app",
-        linkedin: "linkedin.com/in/kamilwrobel", // Placeholder maintained as not found in OCR explicitly, but maybe user can fill
+        linkedin: "linkedin.com/in/kamil-wróbel-28932923a",
         location: "Łódź, Polska",
         photoUrl: "/profilowe/photo.jpg",
     },

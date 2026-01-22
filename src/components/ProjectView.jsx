@@ -3,7 +3,7 @@ import { supabase } from '../supabaseClient';
 import { useParams, Link } from 'react-router-dom';
 import CVLayout from './CVLayout';
 import ExperienceEditor from './ExperienceEditor';
-import SummaryEditor from './SummaryEditor';
+import GenericEditor from './GenericEditor';
 import { staticData } from '../data/staticData';
 
 const ProjectView = ({ session }) => {
@@ -11,7 +11,9 @@ const ProjectView = ({ session }) => {
     const [project, setProject] = useState(null);
     const [projectEntries, setProjectEntries] = useState([]);
     const [isEditorOpen, setIsEditorOpen] = useState(false);
-    const [isSummaryEditorOpen, setIsSummaryEditorOpen] = useState(false);
+
+    // activeField: 'summary' | 'role' | 'portfolio' | null
+    const [activeField, setActiveField] = useState(null);
     const [editingEntry, setEditingEntry] = useState(null);
 
     useEffect(() => {
@@ -62,6 +64,7 @@ const ProjectView = ({ session }) => {
         ...staticData,
         personalInfo: {
             ...staticData.personalInfo,
+            role: project.role || staticData.personalInfo.role,
             portfolio: project.portfolio || staticData.personalInfo.portfolio
         },
         summary: project.summary || staticData.summary,
@@ -96,8 +99,8 @@ const ProjectView = ({ session }) => {
                 data={fullData}
                 isEditable={true}
                 onEdit={(entry) => {
-                    if (entry.role === 'summary') {
-                        setIsSummaryEditorOpen(true);
+                    if (['summary', 'role', 'portfolio'].includes(entry.role)) {
+                        setActiveField(entry.role);
                     } else {
                         setEditingEntry(entry);
                         setIsEditorOpen(true);
@@ -131,11 +134,17 @@ const ProjectView = ({ session }) => {
                 />
             )}
 
-            {isSummaryEditorOpen && (
-                <SummaryEditor
+            {activeField && (
+                <GenericEditor
                     projectId={projectId}
-                    initialSummary={project.summary || staticData.summary}
-                    onClose={() => setIsSummaryEditorOpen(false)}
+                    field={activeField}
+                    label={activeField}
+                    initialValue={
+                        activeField === 'summary' ? (project.summary || staticData.summary) :
+                            activeField === 'role' ? (project.role || staticData.personalInfo.role) :
+                                activeField === 'portfolio' ? (project.portfolio || staticData.personalInfo.portfolio) : ''
+                    }
+                    onClose={() => setActiveField(null)}
                     onSuccess={() => fetchProjectData()}
                 />
             )}

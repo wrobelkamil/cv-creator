@@ -21,7 +21,20 @@ const CVLayout = ({ data, isEditable = false, onEdit, onDelete }) => {
 
                 <div className="cv-header-info">
                     <h1 className="cv-name">{data.personalInfo.fullName}</h1>
-                    <div className="cv-role">{data.personalInfo.role}</div>
+                    <div className="cv-role" style={{ position: 'relative', display: 'inline-block' }}>
+                        {data.personalInfo.role}
+                        {isEditable && (
+                            <button
+                                onClick={() => onEdit({ role: 'role' })}
+                                className="no-print"
+                                style={{
+                                    fontSize: '14px', border: 'none', background: 'none', cursor: 'pointer',
+                                    paddingLeft: '10px', verticalAlign: 'middle', opacity: 0.5
+                                }}
+                                title="Edytuj Stanowisko"
+                            >✏️</button>
+                        )}
+                    </div>
 
                     <div className="cv-contact-details">
                         <span className="cv-contact-item">
@@ -35,11 +48,22 @@ const CVLayout = ({ data, isEditable = false, onEdit, onDelete }) => {
                             <Mail size={14} className="cv-icon" />
                             <a href={`mailto:${data.personalInfo.email}`}>{data.personalInfo.email}</a>
                         </span>
-                        <span className="cv-contact-item">
+                        <span className="cv-contact-item" style={{ position: 'relative' }}>
                             <Globe size={14} className="cv-icon" />
                             <a href={`https://${data.personalInfo.portfolio}`} target="_blank" rel="noreferrer">
                                 {data.personalInfo.portfolio}
                             </a>
+                            {isEditable && (
+                                <button
+                                    onClick={() => onEdit({ role: 'portfolio' })}
+                                    className="no-print"
+                                    style={{
+                                        fontSize: '12px', border: 'none', background: 'none', cursor: 'pointer',
+                                        paddingLeft: '5px', verticalAlign: 'middle', opacity: 0.5
+                                    }}
+                                    title="Edytuj Portfolio"
+                                >✏️</button>
+                            )}
                         </span>
                         <span className="cv-contact-item">
                             <Linkedin size={14} className="cv-icon" />

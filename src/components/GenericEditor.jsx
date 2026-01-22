@@ -1,20 +1,20 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
 
-const SummaryEditor = ({ projectId, initialSummary, onClose, onSuccess }) => {
-    const [summary, setSummary] = useState(initialSummary || '');
+const GenericEditor = ({ projectId, initialValue, field, label, onClose, onSuccess }) => {
+    const [value, setValue] = useState(initialValue || '');
     const [loading, setLoading] = useState(false);
 
     const handleSave = async () => {
         setLoading(true);
         const { error } = await supabase
             .from('projects')
-            .update({ summary })
+            .update({ [field]: value })
             .eq('id', projectId);
 
         setLoading(false);
         if (error) {
-            alert('Error updating summary: ' + error.message);
+            alert(`Error updating ${label}: ` + error.message);
         } else {
             onSuccess();
             onClose();
@@ -27,13 +27,24 @@ const SummaryEditor = ({ projectId, initialSummary, onClose, onSuccess }) => {
             backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000
         }}>
             <div style={{ background: 'white', padding: '20px', borderRadius: '8px', width: '500px', maxWidth: '95%' }}>
-                <h3>Edit Professional Profile</h3>
-                <textarea
-                    value={summary}
-                    onChange={(e) => setSummary(e.target.value)}
-                    style={{ width: '100%', height: '150px', padding: '10px', marginBottom: '15px', fontFamily: 'inherit' }}
-                    placeholder="Write your professional summary here..."
-                />
+                <h3 style={{ textTransform: 'capitalize' }}>Edit {label}</h3>
+                {field === 'summary' ? (
+                    <textarea
+                        value={value}
+                        onChange={(e) => setValue(e.target.value)}
+                        style={{ width: '100%', height: '150px', padding: '10px', marginBottom: '15px', fontFamily: 'inherit' }}
+                        placeholder={`Enter ${label}...`}
+                    />
+                ) : (
+                    <input
+                        type="text"
+                        value={value}
+                        onChange={(e) => setValue(e.target.value)}
+                        style={{ width: '100%', padding: '10px', marginBottom: '15px', border: '1px solid #ddd', borderRadius: '4px' }}
+                        placeholder={`Enter ${label}...`}
+                    />
+                )}
+
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                     <button onClick={onClose} style={{ padding: '8px 16px', cursor: 'pointer' }}>Cancel</button>
                     <button
@@ -49,4 +60,4 @@ const SummaryEditor = ({ projectId, initialSummary, onClose, onSuccess }) => {
     );
 };
 
-export default SummaryEditor;
+export default GenericEditor;
