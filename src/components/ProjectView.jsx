@@ -55,6 +55,10 @@ const ProjectView = ({ session }) => {
     // Construct Data for CVLayout
     const fullData = {
         ...staticData,
+        personalInfo: {
+            ...staticData.personalInfo,
+            portfolio: project.portfolio || staticData.personalInfo.portfolio
+        },
         summary: project.summary || staticData.summary,
         experience: projectEntries.length > 0 ? projectEntries : [],
         masterExperience: projectEntries,
