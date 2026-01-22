@@ -103,9 +103,16 @@ const CVLayout = ({ data, isEditable = false, onEdit, onDelete }) => {
                         {data.experience && data.experience.map((job, index) => (
                             <div key={index} className="cv-job-item" style={{ position: 'relative' }}>
                                 {isEditable && (
-                                    <div className="no-print" style={{ position: 'absolute', top: 0, right: 0, display: 'flex', gap: '5px' }}>
-                                        <button onClick={() => onEdit(job)} style={{ cursor: 'pointer', border: 'none', background: 'none', fontSize: '14px' }}>✏️</button>
-                                        <button onClick={() => onDelete(job.id)} style={{ cursor: 'pointer', border: 'none', background: 'none', fontSize: '14px', color: 'red' }}>🗑️</button>
+                                    <div className="no-print" style={{
+                                        position: 'absolute',
+                                        right: '-50px',
+                                        top: '0',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '5px'
+                                    }}>
+                                        <button onClick={() => onEdit(job)} title="Edit" style={{ cursor: 'pointer', border: 'none', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', padding: '4px', borderRadius: '4px', fontSize: '14px' }}>✏️</button>
+                                        <button onClick={() => onDelete(job.id)} title="Delete" style={{ cursor: 'pointer', border: 'none', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', padding: '4px', borderRadius: '4px', fontSize: '14px', color: 'red' }}>🗑️</button>
                                     </div>
                                 )}
                                 <div className="cv-job-header">
