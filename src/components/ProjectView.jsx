@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient';
 import { useParams, Link } from 'react-router-dom';
 import CVLayout from './CVLayout';
 import ExperienceEditor from './ExperienceEditor';
+import SummaryEditor from './SummaryEditor';
 import { staticData } from '../data/staticData';
 
 const ProjectView = ({ session }) => {
@@ -10,6 +11,7 @@ const ProjectView = ({ session }) => {
     const [project, setProject] = useState(null);
     const [projectEntries, setProjectEntries] = useState([]);
     const [isEditorOpen, setIsEditorOpen] = useState(false);
+    const [isSummaryEditorOpen, setIsSummaryEditorOpen] = useState(false);
     const [editingEntry, setEditingEntry] = useState(null);
 
     useEffect(() => {
@@ -18,6 +20,9 @@ const ProjectView = ({ session }) => {
         const channel = supabase
             .channel(`project:${projectId}`)
             .on('postgres_changes', { event: '*', schema: 'public', table: 'project_entries', filter: `project_id=eq.${projectId}` }, (payload) => {
+                fetchProjectData();
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'projects', filter: `id=eq.${projectId}` }, (payload) => {
                 fetchProjectData();
             })
             .subscribe();
@@ -90,7 +95,14 @@ const ProjectView = ({ session }) => {
             <CVLayout
                 data={fullData}
                 isEditable={true}
-                onEdit={(entry) => { setEditingEntry(entry); setIsEditorOpen(true); }}
+                onEdit={(entry) => {
+                    if (entry.role === 'summary') {
+                        setIsSummaryEditorOpen(true);
+                    } else {
+                        setEditingEntry(entry);
+                        setIsEditorOpen(true);
+                    }
+                }}
                 onDelete={deleteEntry}
             />
 
@@ -115,6 +127,15 @@ const ProjectView = ({ session }) => {
                     projectId={projectId}
                     initialData={editingEntry}
                     onClose={() => { setIsEditorOpen(false); setEditingEntry(null); }}
+                    onSuccess={() => fetchProjectData()}
+                />
+            )}
+
+            {isSummaryEditorOpen && (
+                <SummaryEditor
+                    projectId={projectId}
+                    initialSummary={project.summary || staticData.summary}
+                    onClose={() => setIsSummaryEditorOpen(false)}
                     onSuccess={() => fetchProjectData()}
                 />
             )}

@@ -58,7 +58,7 @@ const CVLayout = ({ data, isEditable = false, onEdit, onDelete }) => {
                 <aside className="cv-sidebar">
                     {/* Education */}
                     <section className="cv-section">
-                        <h2 className="cv-section-title">Education</h2>
+                        <h2 className="cv-section-title">Edukacja</h2>
                         {data.education && data.education.map((edu, index) => (
                             <div key={index} className="cv-job-item">
                                 <div className="cv-job-role">{edu.degree}</div>
@@ -72,7 +72,7 @@ const CVLayout = ({ data, isEditable = false, onEdit, onDelete }) => {
                     {/* Courses / Certificates (Stickers) */}
                     {data.courses && (
                         <section className="cv-section">
-                            <h2 className="cv-section-title">Courses & Certs</h2>
+                            <h2 className="cv-section-title">Kursy i Certyfikaty</h2>
                             <div className="cv-stickers-container">
                                 {data.courses.map((course, index) => (
                                     <img
@@ -91,15 +91,33 @@ const CVLayout = ({ data, isEditable = false, onEdit, onDelete }) => {
                 <main className="cv-main">
                     {/* Summary */}
                     {data.summary && (
-                        <section className="cv-section">
-                            <h2 className="cv-section-title">Professional Profile</h2>
+                        <section className="cv-section" style={{ position: 'relative' }}>
+                            <h2 className="cv-section-title">Podsumowanie</h2>
+                            {isEditable && (
+                                <button
+                                    onClick={() => onEdit({ id: 'summary', description: data.summary, role: 'summary' })}
+                                    className="no-print"
+                                    style={{
+                                        position: 'absolute',
+                                        right: '-30px',
+                                        top: '0',
+                                        cursor: 'pointer',
+                                        border: 'none',
+                                        background: 'none',
+                                        fontSize: '14px'
+                                    }}
+                                    title="Edytuj Podsumowanie"
+                                >
+                                    ✏️
+                                </button>
+                            )}
                             <p className="cv-job-desc">{data.summary}</p>
                         </section>
                     )}
 
                     {/* Experience */}
                     <section className="cv-section">
-                        <h2 className="cv-section-title">Experience</h2>
+                        <h2 className="cv-section-title">Doświadczenie</h2>
                         {data.experience && data.experience.map((job, index) => (
                             <div key={index} className="cv-job-item" style={{ position: 'relative' }}>
                                 {isEditable && (
@@ -111,13 +129,13 @@ const CVLayout = ({ data, isEditable = false, onEdit, onDelete }) => {
                                         flexDirection: 'column',
                                         gap: '5px'
                                     }}>
-                                        <button onClick={() => onEdit(job)} title="Edit" style={{ cursor: 'pointer', border: 'none', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', padding: '4px', borderRadius: '4px', fontSize: '14px' }}>✏️</button>
-                                        <button onClick={() => onDelete(job.id)} title="Delete" style={{ cursor: 'pointer', border: 'none', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', padding: '4px', borderRadius: '4px', fontSize: '14px', color: 'red' }}>🗑️</button>
+                                        <button onClick={() => onEdit(job)} title="Edytuj" style={{ cursor: 'pointer', border: 'none', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', padding: '4px', borderRadius: '4px', fontSize: '14px' }}>✏️</button>
+                                        <button onClick={() => onDelete(job.id)} title="Usuń" style={{ cursor: 'pointer', border: 'none', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', padding: '4px', borderRadius: '4px', fontSize: '14px', color: 'red' }}>🗑️</button>
                                     </div>
                                 )}
                                 <div className="cv-job-header">
                                     <div>
-                                        <span className="cv-job-role">{job.role}</span> @ <span className="cv-job-company">{job.company}</span>
+                                        <span className="cv-job-role">{job.role}</span> <span style={{ color: '#ccc', margin: '0 5px' }}>•</span> <span className="cv-job-company">{job.company}</span>
                                     </div>
                                     <span className="cv-job-date">{job.period}</span>
                                 </div>

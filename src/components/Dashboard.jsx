@@ -38,6 +38,15 @@ const Dashboard = ({ session }) => {
         }
     };
 
+    const deleteProject = async (id, e) => {
+        e.preventDefault(); // Prevent link navigation
+        if (!window.confirm("Are you sure? This will delete the project and all its entries.")) return;
+
+        const { error } = await supabase.from('projects').delete().eq('id', id);
+        if (error) alert("Error deleting: " + error.message);
+        else fetchProjects();
+    };
+
     return (
         <div style={{ maxWidth: '800px', margin: '40px auto', fontFamily: 'Inter, sans-serif' }}>
             <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
@@ -63,9 +72,27 @@ const Dashboard = ({ session }) => {
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '20px' }}>
                 {projects.map(project => (
-                    <Link to={`/project/${project.id}`} key={project.id} style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <Link to={`/project/${project.id}`} key={project.id} style={{ textDecoration: 'none', color: 'inherit', position: 'relative' }}>
                         <div style={{ border: '1px solid #eee', padding: '20px', borderRadius: '8px', background: 'white', boxShadow: '0 2px 5px rgba(0,0,0,0.05)', transition: 'transform 0.2s' }}>
-                            <h3 style={{ marginTop: 0 }}>{project.name}</h3>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                <h3 style={{ marginTop: 0, paddingRight: '20px' }}>{project.name}</h3>
+                                <button
+                                    onClick={(e) => deleteProject(project.id, e)}
+                                    title="Delete Project"
+                                    style={{
+                                        color: '#aaa',
+                                        border: 'none',
+                                        background: 'transparent',
+                                        cursor: 'pointer',
+                                        fontSize: '16px',
+                                        padding: '0'
+                                    }}
+                                    onMouseOver={(e) => e.target.style.color = 'red'}
+                                    onMouseOut={(e) => e.target.style.color = '#aaa'}
+                                >
+                                    🗑️
+                                </button>
+                            </div>
                             <p style={{ fontSize: '0.85em', color: '#888' }}>Created: {new Date(project.created_at).toLocaleDateString()}</p>
                             <div style={{ fontSize: '0.8em', background: '#f0f0f0', padding: '5px', borderRadius: '4px', marginTop: '10px', wordBreak: 'break-all', fontFamily: 'monospace' }}>
                                 ID: {project.id}
