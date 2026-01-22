@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
 
-const ExperienceEditor = ({ onClose, onSuccess }) => {
+const ExperienceEditor = ({ onClose, onSuccess, projectId }) => {
     const [formData, setFormData] = useState({
         company: '',
         role: '',
@@ -14,7 +14,6 @@ const ExperienceEditor = ({ onClose, onSuccess }) => {
         e.preventDefault();
         setLoading(true);
 
-        // Get current user
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) {
@@ -23,19 +22,26 @@ const ExperienceEditor = ({ onClose, onSuccess }) => {
             return;
         }
 
+        if (!projectId) {
+            alert("Error: No Project ID context. Please navigate to a project first.");
+            setLoading(false);
+            return;
+        }
+
+        // Insert into project_entries
         const { error } = await supabase
-            .from('cv_entries')
+            .from('project_entries')
             .insert([
                 {
                     ...formData,
-                    user_id: user.id
+                    user_id: user.id,
+                    project_id: projectId
                 }
             ]);
 
         if (error) {
             alert('Error saving: ' + error.message);
         } else {
-            // Reset form or close
             setFormData({ company: '', role: '', period: '', description: '' });
             if (onSuccess) onSuccess();
             onClose();
@@ -51,7 +57,7 @@ const ExperienceEditor = ({ onClose, onSuccess }) => {
             display: 'flex', flexDirection: 'column'
         }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h2>Add Experience</h2>
+                <h2>Populate Career Path</h2>
                 <button onClick={onClose} style={{ border: 'none', background: 'transparent', fontSize: '20px', cursor: 'pointer' }}>✕</button>
             </div>
 
@@ -78,11 +84,11 @@ const ExperienceEditor = ({ onClose, onSuccess }) => {
                     required
                 />
                 <textarea
-                    placeholder="Description (Bullet points...)"
+                    placeholder="Description (Optional - GPT can fill this)"
                     value={formData.description}
                     onChange={e => setFormData({ ...formData, description: e.target.value })}
                     style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '4px', height: '150px', fontFamily: 'inherit' }}
-                    required
+                // Description not strictly required as GPT can fill it later
                 />
 
                 <button
@@ -93,7 +99,7 @@ const ExperienceEditor = ({ onClose, onSuccess }) => {
                         borderRadius: '4px', fontSize: '16px', fontWeight: 'bold', cursor: loading ? 'wait' : 'pointer'
                     }}
                 >
-                    {loading ? 'Saving...' : 'Add to CV'}
+                    {loading ? 'Add Entry' : 'Add to Project'}
                 </button>
             </form>
         </div>

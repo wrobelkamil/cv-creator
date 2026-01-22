@@ -1,0 +1,108 @@
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../supabaseClient';
+import { useParams, Link } from 'react-router-dom';
+import CVLayout from './CVLayout';
+import ExperienceEditor from './ExperienceEditor';
+// We might not need PromptBuilder here directly if we use the backend approach, 
+// but keeping it for manual "Copy Prompt" workflow if needed.
+import { staticData } from '../data/staticData';
+
+const ProjectView = ({ session }) => {
+    const { projectId } = useParams();
+    const [project, setProject] = useState(null);
+    const [projectEntries, setProjectEntries] = useState([]);
+    const [isEditorOpen, setIsEditorOpen] = useState(false);
+
+    useEffect(() => {
+        fetchProjectData();
+
+        // Realtime for THIS project
+        const channel = supabase
+            .channel(`project:${projectId}`)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'project_entries', filter: `project_id=eq.${projectId}` }, (payload) => {
+                console.log('Project update:', payload);
+                fetchProjectData();
+            })
+            .subscribe();
+
+        return () => { supabase.removeChannel(channel); };
+    }, [projectId]);
+
+    const fetchProjectData = async () => {
+        // 1. Get Project Info
+        const { data: projData } = await supabase.from('projects').select('*').eq('id', projectId).single();
+        setProject(projData);
+
+        // 2. Get Entries
+        const { data: entriesData } = await supabase
+            .from('project_entries')
+            .select('*')
+            .eq('project_id', projectId) // Filter by Project
+            .order('created_at', { ascending: false }); // Or sort logic
+
+        if (entriesData) setProjectEntries(entriesData);
+    };
+
+    // Construct Data for CVLayout
+    const fullData = {
+        ...staticData,
+        // Overwrite experience with Project Entries
+        experience: projectEntries.length > 0 ? projectEntries : [], // If empty, shows empty list
+        masterExperience: projectEntries, // For context if needed
+    };
+
+    const copyToken = () => {
+        navigator.clipboard.writeText(projectId);
+        alert("Project Token copied! Paste this into ChatGPT.");
+    };
+
+    if (!project) return <div style={{ padding: '20px' }}>Loading Project...</div>;
+
+    return (
+        <div>
+            {/* Project Header Bar (No Print) */}
+            <div className="no-print" style={{
+                background: '#333', color: 'white', padding: '10px 20px',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                    <Link to="/" style={{ color: '#aaa', textDecoration: 'none' }}>← Dashboard</Link>
+                    <span style={{ fontWeight: 'bold' }}>{project.name}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ fontSize: '0.8em', color: '#aaa' }}>Project Token:</span>
+                    <code style={{ background: '#222', padding: '4px 8px', borderRadius: '4px', fontFamily: 'monospace' }}>{projectId}</code>
+                    <button onClick={copyToken} style={{ cursor: 'pointer', fontSize: '0.8em' }}>📋</button>
+                </div>
+            </div>
+
+            <CVLayout data={fullData} />
+
+            {/* Floating Buttons */}
+            <div className="no-print" style={{ position: 'fixed', bottom: '20px', right: '20px', display: 'flex', flexDirection: 'column', gap: '15px', zIndex: 100 }}>
+                <button
+                    onClick={() => setIsEditorOpen(true)}
+                    style={{
+                        background: '#f59e0b', color: 'white', border: 'none', borderRadius: '50px',
+                        width: '60px', height: '60px', fontSize: '24px', cursor: 'pointer', boxShadow: '0 4px 10px rgba(0,0,0,0.3)'
+                    }}
+                    title="Add Entry Manually"
+                >
+                    ✏️
+                </button>
+            </div>
+
+            <style>{`@media print { .no-print { display: none !important; } }`}</style>
+
+            {isEditorOpen && (
+                <ExperienceEditor
+                    projectId={projectId} // Pass Project ID to Editor
+                    onClose={() => setIsEditorOpen(false)}
+                    onSuccess={() => fetchProjectData()}
+                />
+            )}
+        </div>
+    );
+};
+
+export default ProjectView;
