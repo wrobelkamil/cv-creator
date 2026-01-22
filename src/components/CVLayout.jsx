@@ -3,7 +3,7 @@ import './CVLayout.css';
 import useAutoFit from '../hooks/useAutoFit';
 import { MapPin, Phone, Mail, Globe, Linkedin, Award } from 'lucide-react';
 
-const CVLayout = ({ data }) => {
+const CVLayout = ({ data, isEditable = false, onEdit, onDelete }) => {
     const containerRef = useRef(null);
 
     // Apply auto-fit logic
@@ -101,7 +101,13 @@ const CVLayout = ({ data }) => {
                     <section className="cv-section">
                         <h2 className="cv-section-title">Experience</h2>
                         {data.experience && data.experience.map((job, index) => (
-                            <div key={index} className="cv-job-item">
+                            <div key={index} className="cv-job-item" style={{ position: 'relative' }}>
+                                {isEditable && (
+                                    <div className="no-print" style={{ position: 'absolute', top: 0, right: 0, display: 'flex', gap: '5px' }}>
+                                        <button onClick={() => onEdit(job)} style={{ cursor: 'pointer', border: 'none', background: 'none', fontSize: '14px' }}>✏️</button>
+                                        <button onClick={() => onDelete(job.id)} style={{ cursor: 'pointer', border: 'none', background: 'none', fontSize: '14px', color: 'red' }}>🗑️</button>
+                                    </div>
+                                )}
                                 <div className="cv-job-header">
                                     <div>
                                         <span className="cv-job-role">{job.role}</span> @ <span className="cv-job-company">{job.company}</span>
@@ -109,7 +115,7 @@ const CVLayout = ({ data }) => {
                                     <span className="cv-job-date">{job.period}</span>
                                 </div>
                                 <ul className="cv-job-desc-list">
-                                    {job.description.split('\n').map((line, i) => line.trim() && (
+                                    {job.description && job.description.split('\n').map((line, i) => line.trim() && (
                                         <li key={i}>{line}</li>
                                     ))}
                                 </ul>

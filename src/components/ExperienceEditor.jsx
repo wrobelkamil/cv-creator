@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 
-const ExperienceEditor = ({ onClose, onSuccess, projectId }) => {
+const ExperienceEditor = ({ onClose, onSuccess, projectId, initialData = null }) => {
     const [formData, setFormData] = useState({
         company: '',
         role: '',
@@ -9,6 +9,17 @@ const ExperienceEditor = ({ onClose, onSuccess, projectId }) => {
         description: ''
     });
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (initialData) {
+            setFormData({
+                company: initialData.company || '',
+                role: initialData.role || '',
+                period: initialData.period || '',
+                description: initialData.description || ''
+            });
+        }
+    }, [initialData]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -23,26 +34,31 @@ const ExperienceEditor = ({ onClose, onSuccess, projectId }) => {
         }
 
         if (!projectId) {
-            alert("Error: No Project ID context. Please navigate to a project first.");
+            alert("Error: No Project ID context.");
             setLoading(false);
             return;
         }
 
-        // Insert into project_entries
-        const { error } = await supabase
-            .from('project_entries')
-            .insert([
-                {
-                    ...formData,
-                    user_id: user.id,
-                    project_id: projectId
-                }
-            ]);
+        let error;
+        if (initialData && initialData.id) {
+            // UPDATE existing
+            const { error: updateError } = await supabase
+                .from('project_entries')
+                .update({ ...formData })
+                .eq('id', initialData.id)
+                .eq('project_id', projectId); // Safety check
+            error = updateError;
+        } else {
+            // INSERT new
+            const { error: insertError } = await supabase
+                .from('project_entries')
+                .insert([{ ...formData, user_id: user.id, project_id: projectId }]);
+            error = insertError;
+        }
 
         if (error) {
             alert('Error saving: ' + error.message);
         } else {
-            setFormData({ company: '', role: '', period: '', description: '' });
             if (onSuccess) onSuccess();
             onClose();
         }
@@ -57,7 +73,7 @@ const ExperienceEditor = ({ onClose, onSuccess, projectId }) => {
             display: 'flex', flexDirection: 'column'
         }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h2>Populate Career Path</h2>
+                <h2>{initialData ? 'Edit Experience' : 'Add Experience'}</h2>
                 <button onClick={onClose} style={{ border: 'none', background: 'transparent', fontSize: '20px', cursor: 'pointer' }}>✕</button>
             </div>
 
@@ -88,7 +104,6 @@ const ExperienceEditor = ({ onClose, onSuccess, projectId }) => {
                     value={formData.description}
                     onChange={e => setFormData({ ...formData, description: e.target.value })}
                     style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '4px', height: '150px', fontFamily: 'inherit' }}
-                // Description not strictly required as GPT can fill it later
                 />
 
                 <button
@@ -99,7 +114,7 @@ const ExperienceEditor = ({ onClose, onSuccess, projectId }) => {
                         borderRadius: '4px', fontSize: '16px', fontWeight: 'bold', cursor: loading ? 'wait' : 'pointer'
                     }}
                 >
-                    {loading ? 'Add Entry' : 'Add to Project'}
+                    {loading ? 'Saving...' : (initialData ? 'Update Entry' : 'Add Entry')}
                 </button>
             </form>
         </div>
