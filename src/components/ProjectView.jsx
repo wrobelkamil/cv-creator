@@ -50,6 +50,8 @@ const ProjectView = ({ session }) => {
         else fetchProjectData();
     };
 
+    if (!project) return <div style={{ padding: '20px' }}>Loading Project...</div>;
+
     // Construct Data for CVLayout
     const fullData = {
         ...staticData,
@@ -62,8 +64,6 @@ const ProjectView = ({ session }) => {
         navigator.clipboard.writeText(projectId);
         alert("Project Token copied! Paste this into ChatGPT.");
     };
-
-    if (!project) return <div style={{ padding: '20px' }}>Loading Project...</div>;
 
     return (
         <div>
