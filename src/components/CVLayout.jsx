@@ -1,0 +1,162 @@
+import React, { useRef } from 'react';
+import './CVLayout.css';
+import useAutoFit from '../hooks/useAutoFit';
+import { MapPin, Phone, Mail, Globe, Linkedin, Award } from 'lucide-react';
+
+const CVLayout = ({ data }) => {
+    const containerRef = useRef(null);
+
+    // Apply auto-fit logic
+    useAutoFit(containerRef, data);
+
+    return (
+        <div className="cv-container" ref={containerRef}>
+            {/* Header */}
+            <header className="cv-header">
+                {data.personalInfo.photoUrl && (
+                    <div className="cv-photo-wrapper">
+                        <img src={data.personalInfo.photoUrl} alt="Profile" className="cv-photo" />
+                    </div>
+                )}
+
+                <div className="cv-header-info">
+                    <h1 className="cv-name">{data.personalInfo.fullName}</h1>
+                    <div className="cv-role">{data.personalInfo.role}</div>
+
+                    <div className="cv-contact-details">
+                        <span className="cv-contact-item">
+                            <MapPin size={14} className="cv-icon" /> {data.personalInfo.location}
+                        </span>
+                        <span className="cv-contact-item">
+                            <Phone size={14} className="cv-icon" />
+                            <a href={`tel:${data.personalInfo.phone}`}>{data.personalInfo.phone}</a>
+                        </span>
+                        <span className="cv-contact-item">
+                            <Mail size={14} className="cv-icon" />
+                            <a href={`mailto:${data.personalInfo.email}`}>{data.personalInfo.email}</a>
+                        </span>
+                        <span className="cv-contact-item">
+                            <Globe size={14} className="cv-icon" />
+                            <a href={`https://${data.personalInfo.portfolio}`} target="_blank" rel="noreferrer">
+                                {data.personalInfo.portfolio}
+                            </a>
+                        </span>
+                        <span className="cv-contact-item">
+                            <Linkedin size={14} className="cv-icon" />
+                            <a href={`https://${data.personalInfo.linkedin}`} target="_blank" rel="noreferrer">
+                                {data.personalInfo.linkedin}
+                            </a>
+                        </span>
+                    </div>
+                </div>
+            </header>
+
+            {/* Main Body Grid */}
+            <div className="cv-body">
+
+                {/* Left Column (Sidebar) */}
+                <aside className="cv-sidebar">
+                    {/* Education */}
+                    <section className="cv-section">
+                        <h2 className="cv-section-title">Education</h2>
+                        {data.education && data.education.map((edu, index) => (
+                            <div key={index} className="cv-job-item">
+                                <div className="cv-job-role">{edu.degree}</div>
+                                <div className="cv-job-company">{edu.school}</div>
+                                <div className="cv-job-date">{edu.year}</div>
+                                {edu.description && <div className="cv-job-desc">{edu.description}</div>}
+                            </div>
+                        ))}
+                    </section>
+
+                    {/* Languages */}
+                    <section className="cv-section">
+                        <h2 className="cv-section-title">Languages</h2>
+                        <ul className="cv-skills-list">
+                            {data.languages && data.languages.map((lang, index) => (
+                                <li key={index} className="cv-skill-tag">{lang}</li>
+                            ))}
+                        </ul>
+                    </section>
+
+                    {/* Skills (Static) */}
+                    <section className="cv-section">
+                        <h2 className="cv-section-title">Skills</h2>
+                        <ul className="cv-skills-list">
+                            {data.skills && data.skills.map((skill, index) => (
+                                <li key={index} className="cv-skill-tag">{skill}</li>
+                            ))}
+                        </ul>
+                    </section>
+
+                    {/* Courses / Certificates (Stickers) */}
+                    {data.courses && (
+                        <section className="cv-section">
+                            <h2 className="cv-section-title">Courses & Certs</h2>
+                            <div className="cv-stickers-container">
+                                {data.courses.map((course, index) => (
+                                    <img
+                                        key={index}
+                                        src={`/certyfikaty/${course.image}`}
+                                        alt="Certificate"
+                                        className="cv-certificate-img"
+                                    />
+                                ))}
+                            </div>
+                        </section>
+                    )}
+
+                    {/* Matched Skills (Dynamic - from Offer) */}
+                    {data.matchedSkills && data.matchedSkills.length > 0 && (
+                        <section className="cv-section">
+                            <h2 className="cv-section-title">Key Assets</h2>
+                            <ul className="cv-skills-list">
+                                {data.matchedSkills.map((skill, index) => (
+                                    <li key={index} className="cv-skill-tag"><strong>{skill}</strong></li>
+                                ))}
+                            </ul>
+                        </section>
+                    )}
+                </aside>
+
+                {/* Right Column (Career) */}
+                <main className="cv-main">
+                    {/* Summary */}
+                    {data.summary && (
+                        <section className="cv-section">
+                            <h2 className="cv-section-title">Professional Profile</h2>
+                            <p className="cv-job-desc">{data.summary}</p>
+                        </section>
+                    )}
+
+                    {/* Experience */}
+                    <section className="cv-section">
+                        <h2 className="cv-section-title">Experience</h2>
+                        {data.experience && data.experience.map((job, index) => (
+                            <div key={index} className="cv-job-item">
+                                <div className="cv-job-header">
+                                    <div>
+                                        <span className="cv-job-role">{job.role}</span> @ <span className="cv-job-company">{job.company}</span>
+                                    </div>
+                                    <span className="cv-job-date">{job.period}</span>
+                                </div>
+                                <ul className="cv-job-desc-list">
+                                    {job.description.split('\n').map((line, i) => line.trim() && (
+                                        <li key={i}>{line}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        ))}
+                    </section>
+                </main>
+            </div>
+
+            {/* Footer (RODO) */}
+            <footer className="cv-footer">
+                Wyrażam zgodę na przetwarzanie moich danych osobowych dla potrzeb niezbędnych do realizacji procesu rekrutacji (zgodnie z ustawą z dnia 10 maja 2018 roku o ochronie danych osobowych (Dz. Ustaw z 2018, poz. 1000) oraz zgodnie z Rozporządzeniem Parlamentu Europejskiego i Rady (UE) 2016/679 z dnia 27 kwietnia 2016 r. w sprawie ochrony osób fizycznych w związku z przetwarzaniem danych osobowych i w sprawie swobodnego przepływu takich danych oraz uchylenia dyrektywy 95/46/WE (RODO)).
+            </footer>
+        </div>
+    );
+};
+
+export default CVLayout;
