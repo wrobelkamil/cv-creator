@@ -5,6 +5,7 @@ import CVLayout from './components/CVLayout';
 import DataImporter from './components/DataImporter';
 import PromptBuilder from './components/PromptBuilder';
 import AuthModal from './components/AuthModal';
+import ExperienceEditor from './components/ExperienceEditor';
 import { staticData } from './data/staticData';
 import { initialDynamicData } from './data/dynamicData';
 
@@ -16,20 +17,18 @@ function App() {
   const [isImporterOpen, setIsImporterOpen] = useState(false);
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
 
   useEffect(() => {
-    // Safety check: if supabase client is null (missing env vars), skip auth logic
     if (!supabase) {
       console.warn("Supabase client not initialized. Check .env or Netlify settings.");
       return;
     }
 
-    // Check active session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
     });
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
     });
@@ -43,17 +42,29 @@ function App() {
 
         if (error) {
           console.log('Supabase fetch error:', error.message);
-        } else if (data && data.length > 0) {
+        } else if (data) {
           setDbExperience(data);
         }
       } catch (err) {
-        console.log("Supabase connection failed.");
+        console.log("Supabase connection error.");
       }
     };
 
     fetchExperience();
 
-    return () => subscription.unsubscribe();
+    // REALTIME SUBSCRIPTION
+    const channel = supabase
+      .channel('public:cv_entries')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cv_entries' }, (payload) => {
+        console.log('Realtime change:', payload);
+        fetchExperience(); // Refresh data on any change
+      })
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fullData = {
@@ -85,7 +96,6 @@ function App() {
       }}
         className="no-print"
       >
-        {/* Auth Button */}
         <button
           onClick={() => {
             if (!supabase) {
@@ -95,7 +105,7 @@ function App() {
             session ? supabase.auth.signOut() : setIsAuthOpen(true);
           }}
           style={{
-            background: session ? '#444' : '#22c55e', // Green for Login, Dark for Logout
+            background: session ? '#444' : '#22c55e',
             color: 'white', border: 'none', borderRadius: '50px', width: '60px', height: '60px', fontSize: '24px', cursor: 'pointer', boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
             display: 'flex', alignItems: 'center', justifyContent: 'center'
           }}
@@ -103,6 +113,20 @@ function App() {
         >
           {session ? '🔓' : '🔑'}
         </button>
+
+        {session && (
+          <button
+            onClick={() => setIsEditorOpen(true)}
+            style={{
+              background: '#f59e0b',
+              color: 'white', border: 'none', borderRadius: '50px', width: '60px', height: '60px', fontSize: '24px', cursor: 'pointer', boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}
+            title="Edit Experience"
+          >
+            ✏️
+          </button>
+        )}
 
         <button
           onClick={() => setIsBuilderOpen(true)}
@@ -162,6 +186,13 @@ function App() {
 
       {isAuthOpen && (
         <AuthModal onClose={() => setIsAuthOpen(false)} />
+      )}
+
+      {isEditorOpen && (
+        <ExperienceEditor
+          onClose={() => setIsEditorOpen(false)}
+        // onSuccess={() => {}} // Covered by realtime subscription
+        />
       )}
     </div>
   );

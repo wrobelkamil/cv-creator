@@ -69,26 +69,6 @@ const CVLayout = ({ data }) => {
                         ))}
                     </section>
 
-                    {/* Languages */}
-                    <section className="cv-section">
-                        <h2 className="cv-section-title">Languages</h2>
-                        <ul className="cv-skills-list">
-                            {data.languages && data.languages.map((lang, index) => (
-                                <li key={index} className="cv-skill-tag">{lang}</li>
-                            ))}
-                        </ul>
-                    </section>
-
-                    {/* Skills (Static) */}
-                    <section className="cv-section">
-                        <h2 className="cv-section-title">Skills</h2>
-                        <ul className="cv-skills-list">
-                            {data.skills && data.skills.map((skill, index) => (
-                                <li key={index} className="cv-skill-tag">{skill}</li>
-                            ))}
-                        </ul>
-                    </section>
-
                     {/* Courses / Certificates (Stickers) */}
                     {data.courses && (
                         <section className="cv-section">
@@ -103,18 +83,6 @@ const CVLayout = ({ data }) => {
                                     />
                                 ))}
                             </div>
-                        </section>
-                    )}
-
-                    {/* Matched Skills (Dynamic - from Offer) */}
-                    {data.matchedSkills && data.matchedSkills.length > 0 && (
-                        <section className="cv-section">
-                            <h2 className="cv-section-title">Key Assets</h2>
-                            <ul className="cv-skills-list">
-                                {data.matchedSkills.map((skill, index) => (
-                                    <li key={index} className="cv-skill-tag"><strong>{skill}</strong></li>
-                                ))}
-                            </ul>
                         </section>
                     )}
                 </aside>
