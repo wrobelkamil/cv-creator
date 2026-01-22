@@ -50,8 +50,12 @@ const CVLayout = ({ data, isEditable = false, onEdit, onDelete }) => {
                         </span>
                         <span className="cv-contact-item" style={{ position: 'relative' }}>
                             <Globe size={14} className="cv-icon" />
-                            <a href={`https://${data.personalInfo.portfolio}`} target="_blank" rel="noreferrer">
-                                {data.personalInfo.portfolio}
+                            <a
+                                href={data.personalInfo.portfolio?.startsWith('http') ? data.personalInfo.portfolio : `https://${data.personalInfo.portfolio}`}
+                                target="_blank"
+                                rel="noreferrer"
+                            >
+                                {data.personalInfo.portfolio?.replace(/^https?:\/\//, '')}
                             </a>
                             {isEditable && (
                                 <button
