@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
 
@@ -8,6 +9,12 @@ const AuthModal = ({ onClose }) => {
 
     const handleLogin = async (e) => {
         e.preventDefault();
+
+        if (!supabase) {
+            setMessage("Error: Supabase not configured. Missing Environment Variables.");
+            return;
+        }
+
         setLoading(true);
         const { error } = await supabase.auth.signInWithOtp({ email });
 
