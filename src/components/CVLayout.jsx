@@ -13,7 +13,7 @@ const fixOrphans = (text) => {
 
 
 
-const CVLayout = ({ data, isEditable = false, onEdit, onDelete }) => {
+const CVLayout = ({ data, isEditable = false, onEdit, onDelete, onMove }) => {
     const containerRef = useRef(null);
 
     // Apply auto-fit logic
@@ -169,6 +169,42 @@ const CVLayout = ({ data, isEditable = false, onEdit, onDelete }) => {
                                     }}>
                                         <button onClick={() => onEdit(job)} title="Edytuj" style={{ cursor: 'pointer', border: 'none', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', padding: '4px', borderRadius: '4px', fontSize: '14px' }}>✏️</button>
                                         <button onClick={() => onDelete(job.id)} title="Usuń" style={{ cursor: 'pointer', border: 'none', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', padding: '4px', borderRadius: '4px', fontSize: '14px', color: 'red' }}>🗑️</button>
+
+                                        {/* Sort Controls */}
+                                        <div style={{ display: 'flex', gap: '2px', marginTop: '5px' }}>
+                                            {index > 0 && (
+                                                <button
+                                                    onClick={() => onMove && onMove(index, -1)}
+                                                    title="Przesuń wyżej"
+                                                    style={{ cursor: 'pointer', border: 'none', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', padding: '2px 5px', borderRadius: '4px', fontSize: '12px' }}
+                                                >⬆️</button>
+                                            )}
+                                            {index < data.experience.length - 1 && (
+                                                <button
+                                                    onClick={() => onMove && onMove(index, 1)}
+                                                    title="Przesuń niżej"
+                                                    style={{ cursor: 'pointer', border: 'none', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', padding: '2px 5px', borderRadius: '4px', fontSize: '12px' }}
+                                                >⬇️</button>
+                                            )}
+                                        </div>
+
+                                        {/* Sort Controls */}
+                                        <div style={{ display: 'flex', gap: '2px', marginTop: '5px' }}>
+                                            {index > 0 && (
+                                                <button
+                                                    onClick={() => onMove && onMove(index, -1)}
+                                                    title="Przesuń wyżej"
+                                                    style={{ cursor: 'pointer', border: 'none', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', padding: '2px 5px', borderRadius: '4px', fontSize: '12px' }}
+                                                >⬆️</button>
+                                            )}
+                                            {index < data.experience.length - 1 && (
+                                                <button
+                                                    onClick={() => onMove && onMove(index, 1)}
+                                                    title="Przesuń niżej"
+                                                    style={{ cursor: 'pointer', border: 'none', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', padding: '2px 5px', borderRadius: '4px', fontSize: '12px' }}
+                                                >⬇️</button>
+                                            )}
+                                        </div>
                                     </div>
                                 )}
                                 <div className="cv-job-header">
