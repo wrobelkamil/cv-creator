@@ -13,7 +13,7 @@ const fixOrphans = (text) => {
 
 
 
-const CVLayout = ({ data, isEditable = false, onEdit, onDelete, onMove }) => {
+const CVLayout = ({ data, isEditable = false, onEdit, onDelete, onMove, isMoving }) => {
     const containerRef = useRef(null);
 
     // Apply auto-fit logic
@@ -175,15 +175,35 @@ const CVLayout = ({ data, isEditable = false, onEdit, onDelete, onMove }) => {
                                             {index > 0 && (
                                                 <button
                                                     onClick={() => onMove && onMove(index, -1)}
+                                                    disabled={isMoving}
                                                     title="Przesuń wyżej"
-                                                    style={{ cursor: 'pointer', border: 'none', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', padding: '2px 5px', borderRadius: '4px', fontSize: '12px' }}
+                                                    style={{
+                                                        cursor: isMoving ? 'not-allowed' : 'pointer',
+                                                        border: 'none',
+                                                        background: '#fff',
+                                                        boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                                                        padding: '2px 5px',
+                                                        borderRadius: '4px',
+                                                        fontSize: '12px',
+                                                        opacity: isMoving ? 0.5 : 1
+                                                    }}
                                                 >⬆️</button>
                                             )}
                                             {index < data.experience.length - 1 && (
                                                 <button
                                                     onClick={() => onMove && onMove(index, 1)}
+                                                    disabled={isMoving}
                                                     title="Przesuń niżej"
-                                                    style={{ cursor: 'pointer', border: 'none', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', padding: '2px 5px', borderRadius: '4px', fontSize: '12px' }}
+                                                    style={{
+                                                        cursor: isMoving ? 'not-allowed' : 'pointer',
+                                                        border: 'none',
+                                                        background: '#fff',
+                                                        boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                                                        padding: '2px 5px',
+                                                        borderRadius: '4px',
+                                                        fontSize: '12px',
+                                                        opacity: isMoving ? 0.5 : 1
+                                                    }}
                                                 >⬇️</button>
                                             )}
                                         </div>

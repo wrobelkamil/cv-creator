@@ -57,12 +57,44 @@ const ProjectView = ({ session }) => {
         else fetchProjectData();
     };
 
+    const [isMoving, setIsMoving] = useState(false);
+
     const moveEntry = async (index, direction) => {
+        if (isMoving) return;
         const newIndex = index + direction;
         if (newIndex < 0 || newIndex >= projectEntries.length) return;
 
+        setIsMoving(true);
+
         const itemA = projectEntries[index];
         const itemB = projectEntries[newIndex];
+
+        // Parse timestamps
+        let timeA = new Date(itemA.created_at).getTime();
+        let timeB = new Date(itemB.created_at).getTime();
+
+        // Swap values
+        const temp = timeA;
+        timeA = timeB;
+        timeB = temp;
+
+        // Handle collision or insufficient precision
+        if (timeA === timeB) {
+            // We want itemA (at newIndex) to be effectively sorted relative to itemB (at index)
+            // Order is DESC (Newer First).
+            // If newIndex < index (Moving Up): ItemA is above ItemB. ItemA must be NEWER (Larger Time).
+            if (newIndex < index) {
+                timeA += 1;
+            }
+            // If newIndex > index (Moving Down): ItemA is below ItemB. ItemA must be OLDER (Smaller Time).
+            else {
+                timeA -= 1;
+            }
+        }
+
+        // Convert back to ISO string
+        const newTimeA = new Date(timeA).toISOString();
+        const newTimeB = new Date(timeB).toISOString();
 
         // Optimistic UI update
         const newEntries = [...projectEntries];
@@ -70,23 +102,25 @@ const ProjectView = ({ session }) => {
         newEntries[newIndex] = itemA;
         setProjectEntries(newEntries);
 
-        // Swap created_at in Supabase to persist order
-        // (Since we order by created_at desc, swapping timestamps swaps position)
         try {
-            const { error: errorA } = await supabase
-                .from('project_entries')
-                .update({ created_at: itemB.created_at })
-                .eq('id', itemA.id);
+            await Promise.all([
+                supabase
+                    .from('project_entries')
+                    .update({ created_at: newTimeA })
+                    .eq('id', itemA.id),
+                supabase
+                    .from('project_entries')
+                    .update({ created_at: newTimeB })
+                    .eq('id', itemB.id)
+            ]);
 
-            const { error: errorB } = await supabase
-                .from('project_entries')
-                .update({ created_at: itemA.created_at })
-                .eq('id', itemB.id);
-
-            if (errorA || errorB) throw new Error("Failed to swap");
+            // Fetch strict fresh data to confirm headers/order
+            await fetchProjectData();
         } catch (error) {
             console.error("Reorder failed:", error);
             fetchProjectData(); // Revert on error
+        } finally {
+            setIsMoving(false);
         }
     };
 
