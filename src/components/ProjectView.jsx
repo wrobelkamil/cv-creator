@@ -57,6 +57,39 @@ const ProjectView = ({ session }) => {
         else fetchProjectData();
     };
 
+    const moveEntry = async (index, direction) => {
+        const newIndex = index + direction;
+        if (newIndex < 0 || newIndex >= projectEntries.length) return;
+
+        const itemA = projectEntries[index];
+        const itemB = projectEntries[newIndex];
+
+        // Optimistic UI update
+        const newEntries = [...projectEntries];
+        newEntries[index] = itemB;
+        newEntries[newIndex] = itemA;
+        setProjectEntries(newEntries);
+
+        // Swap created_at in Supabase to persist order
+        // (Since we order by created_at desc, swapping timestamps swaps position)
+        try {
+            const { error: errorA } = await supabase
+                .from('project_entries')
+                .update({ created_at: itemB.created_at })
+                .eq('id', itemA.id);
+
+            const { error: errorB } = await supabase
+                .from('project_entries')
+                .update({ created_at: itemA.created_at })
+                .eq('id', itemB.id);
+
+            if (errorA || errorB) throw new Error("Failed to swap");
+        } catch (error) {
+            console.error("Reorder failed:", error);
+            fetchProjectData(); // Revert on error
+        }
+    };
+
     if (!project) return <div style={{ padding: '20px' }}>Loading Project...</div>;
 
     // Construct Data for CVLayout
@@ -107,6 +140,7 @@ const ProjectView = ({ session }) => {
                     }
                 }}
                 onDelete={deleteEntry}
+                onMove={moveEntry}
             />
 
             {/* Floating Buttons */}
