@@ -3,6 +3,16 @@ import './CVLayout.css';
 import useAutoFit from '../hooks/useAutoFit';
 import { MapPin, Phone, Mail, Globe, Linkedin, Award } from 'lucide-react';
 
+// Helper to fix orphans (hanging single letter words)
+const fixOrphans = (text) => {
+    if (!text) return "";
+    // Regex for single letters flanked by spaces (or start of line)
+    // We strictly target common Polish orphans: a, i, o, u, w, z
+    return text.replace(/ ([aiouwzAIOUWZ]) /g, ' $1\u00A0');
+};
+
+
+
 const CVLayout = ({ data, isEditable = false, onEdit, onDelete }) => {
     const containerRef = useRef(null);
 
@@ -92,7 +102,7 @@ const CVLayout = ({ data, isEditable = false, onEdit, onDelete }) => {
                                 <div className="cv-job-role">{edu.degree}</div>
                                 <div className="cv-job-company">{edu.school}</div>
                                 <div className="cv-job-date">{edu.year}</div>
-                                {edu.description && <div className="cv-job-desc">{edu.description}</div>}
+                                {edu.description && <div className="cv-job-desc">{fixOrphans(edu.description)}</div>}
                             </div>
                         ))}
                     </section>
@@ -139,7 +149,7 @@ const CVLayout = ({ data, isEditable = false, onEdit, onDelete }) => {
                                     ✏️
                                 </button>
                             )}
-                            <p className="cv-job-desc">{data.summary}</p>
+                            <p className="cv-job-desc">{fixOrphans(data.summary)}</p>
                         </section>
                     )}
 
@@ -169,7 +179,7 @@ const CVLayout = ({ data, isEditable = false, onEdit, onDelete }) => {
                                 </div>
                                 <ul className="cv-job-desc-list">
                                     {job.description && job.description.split('\n').map((line, i) => line.trim() && (
-                                        <li key={i}>{line}</li>
+                                        <li key={i}>{fixOrphans(line)}</li>
                                     ))}
                                 </ul>
                             </div>
