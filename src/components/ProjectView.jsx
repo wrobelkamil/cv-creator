@@ -179,10 +179,10 @@ const ProjectView = ({ session }) => {
         setIsDownloading(true);
         const element = document.querySelector('.cv-container');
 
-        // Construct filename: CV_[FirstName]_[ProjectName]
-        const firstName = project.full_name?.split(' ')[0] || 'Draft';
-        const sanitizedProjectName = project.name?.replace(/\s+/g, '_') || 'Project';
-        const fileName = `CV_${firstName}_${sanitizedProjectName}.pdf`;
+        // Construct filename: CV_[FullName]
+        const fullName = project.full_name || 'Draft';
+        const sanitizedData = fullName.replace(/\s+/g, '_');
+        const fileName = `CV_${sanitizedData}.pdf`;
 
         const opt = {
             margin: 0,
