@@ -93,6 +93,19 @@ const ProjectView = ({ session }) => {
         updateProject({ courses: newCourses });
     };
 
+    // Reorder Skills (Array in JSONB)
+    const reorderSkills = (fromIndex, direction) => {
+        if (!project?.skills) return;
+        const toIndex = fromIndex + direction;
+        if (toIndex < 0 || toIndex >= project.skills.length) return;
+
+        const newSkills = [...project.skills];
+        const [movedItem] = newSkills.splice(fromIndex, 1);
+        newSkills.splice(toIndex, 0, movedItem);
+
+        updateProject({ skills: newSkills });
+    };
+
     const deleteEntry = async (id) => {
         if (!window.confirm("Are you sure you want to delete this entry?")) return;
 
@@ -248,6 +261,8 @@ const ProjectView = ({ session }) => {
             // Arrays
             if (field === 'education' && userProfile.education && userProfile.education.length > 0) return userProfile.education;
             if (field === 'courses' && userProfile.courses && userProfile.courses.length > 0) return userProfile.courses;
+            // Skills fallback logic (assuming profile has skills, if not, static)
+            if (field === 'skills' && userProfile.skills && userProfile.skills.length > 0) return userProfile.skills;
         }
 
         // 3. Static Data (last resort)
@@ -269,7 +284,7 @@ const ProjectView = ({ session }) => {
         summary: getVal('summary'),
         experience: projectEntries, // Experience is always project specific
         education: project.education && project.education.length > 0 ? project.education : (userProfile?.education || staticData.education),
-        skills: staticData.skills,
+        skills: project.skills && project.skills.length > 0 ? project.skills : (userProfile?.skills || staticData.skills),
         languages: staticData.languages,
         courses: project.courses && project.courses.length > 0 ? project.courses : (userProfile?.courses || staticData.courses),
         coursesDisplayMode: project.courses_display_mode || 'icons'
@@ -329,6 +344,7 @@ const ProjectView = ({ session }) => {
                 onReorderEntries={moveEntry} // Pass handler for Exp
                 onReorderEducation={reorderEducation}
                 onReorderCourses={reorderCourses}
+                onReorderSkills={reorderSkills}
             />
 
             {/* Modal for Experience Editing (still useful for rich details) */}

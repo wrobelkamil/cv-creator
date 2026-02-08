@@ -11,10 +11,15 @@ const ProjectEditor = ({
     onDeleteEntry,
     onReorderEntries,
     onReorderEducation,
-    onReorderCourses
+    onReorderCourses,
+    onReorderSkills
 }) => {
     const [activeTab, setActiveTab] = useState('personal');
     const [uploading, setUploading] = useState(false);
+
+    // Local state for skills
+    const [isAddingSkill, setIsAddingSkill] = useState(false);
+    const [newSkill, setNewSkill] = useState('');
 
     // Local state for new/editing education/course items
     const [isAddingEdu, setIsAddingEdu] = useState(false);
@@ -118,6 +123,21 @@ const ProjectEditor = ({
         setEditingCourseIndex(null);
     };
 
+    // --- Skills Handlers ---
+    const addSkill = () => {
+        if (!newSkill.trim()) return;
+        const currentSkills = project.skills || [];
+        onUpdateProject({ skills: [...currentSkills, newSkill] });
+        setNewSkill('');
+        setIsAddingSkill(false);
+    };
+
+    const deleteSkill = (index) => {
+        const currentSkills = project.skills || [];
+        const updated = currentSkills.filter((_, i) => i !== index);
+        onUpdateProject({ skills: updated });
+    };
+
     const importDefaultExperience = async () => {
         if (!window.confirm("Import default experience? This will append to your current list.")) return;
 
@@ -149,6 +169,7 @@ const ProjectEditor = ({
                 <button className={activeTab === 'design' ? 'active' : ''} onClick={() => setActiveTab('design')}>Design 🎨</button>
                 <button className={activeTab === 'experience' ? 'active' : ''} onClick={() => setActiveTab('experience')}>Exp</button>
                 <button className={activeTab === 'education' ? 'active' : ''} onClick={() => setActiveTab('education')}>Edu</button>
+                <button className={activeTab === 'skills' ? 'active' : ''} onClick={() => setActiveTab('skills')}>Skills</button>
                 <button className={activeTab === 'courses' ? 'active' : ''} onClick={() => setActiveTab('courses')}>Courses</button>
             </div>
 
@@ -225,6 +246,71 @@ const ProjectEditor = ({
                             </select>
                         </div>
 
+                        <div className="input-group">
+                            <label>Font Family</label>
+                            <select
+                                value={styles.font || 'Inter'}
+                                onChange={(e) => onUpdateProject({ styles: { ...styles, font: e.target.value } })}
+                                style={{ width: '100%', padding: '8px' }}
+                            >
+                                <option value="Inter">Inter (Modern Sans)</option>
+                                <option value="Roboto">Roboto (Neutral)</option>
+                                <option value="Lato">Lato (Friendly)</option>
+                                <option value="Montserrat">Montserrat (Geometric)</option>
+                                <option value="Merriweather">Merriweather (Serif)</option>
+                                <option value="Playfair Display">Playfair Display (Elegant Serif)</option>
+                            </select>
+                        </div>
+
+                        <div className="input-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <input
+                                type="checkbox"
+                                checked={styles.nameLayout === 'two-line'}
+                                onChange={(e) => onUpdateProject({ styles: { ...styles, nameLayout: e.target.checked ? 'two-line' : 'single' } })}
+                                id="nameLayout"
+                            />
+                            <label htmlFor="nameLayout" style={{ marginBottom: 0 }}>Two-line Name</label>
+                        </div>
+
+                        {styles.nameLayout === 'two-line' && (
+                            <>
+                                <div className="input-group">
+                                    <label>First Name Scale ({styles.firstNameScale || 1}x)</label>
+                                    <input
+                                        type="range"
+                                        min="0.5"
+                                        max="3.0"
+                                        step="0.1"
+                                        value={styles.firstNameScale || 1}
+                                        onChange={(e) => onUpdateProject({ styles: { ...styles, firstNameScale: parseFloat(e.target.value) } })}
+                                        style={{ width: '100%' }}
+                                    />
+                                </div>
+                                <div className="input-group">
+                                    <label>Last Name Scale ({styles.lastNameScale || 1}x)</label>
+                                    <input
+                                        type="range"
+                                        min="0.5"
+                                        max="3.0"
+                                        step="0.1"
+                                        value={styles.lastNameScale || 1}
+                                        onChange={(e) => onUpdateProject({ styles: { ...styles, lastNameScale: parseFloat(e.target.value) } })}
+                                        style={{ width: '100%' }}
+                                    />
+                                </div>
+                            </>
+                        )}
+
+                        <div className="input-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <input
+                                type="checkbox"
+                                checked={styles.educationLayout === 'swapped'}
+                                onChange={(e) => onUpdateProject({ styles: { ...styles, educationLayout: e.target.checked ? 'swapped' : 'standard' } })}
+                                id="eduLayout"
+                            />
+                            <label htmlFor="eduLayout" style={{ marginBottom: 0 }}>Swap School/Degree</label>
+                        </div>
+
                         <div className="input-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <input
                                 type="checkbox"
@@ -233,6 +319,40 @@ const ProjectEditor = ({
                                 id="nameUppercase"
                             />
                             <label htmlFor="nameUppercase" style={{ marginBottom: 0 }}>Uppercase Name</label>
+                        </div>
+
+                        <h3>Section Headings</h3>
+                        <div className="input-group">
+                            <label>Heading Scale ({styles.headingScale || 1}x)</label>
+                            <input
+                                type="range"
+                                min="0.8"
+                                max="2.0"
+                                step="0.1"
+                                value={styles.headingScale || 1}
+                                onChange={(e) => onUpdateProject({ styles: { ...styles, headingScale: parseFloat(e.target.value) } })}
+                                style={{ width: '100%' }}
+                            />
+                        </div>
+
+                        <div className="input-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <input
+                                type="checkbox"
+                                checked={styles.headingUppercase !== false} // Default to true
+                                onChange={(e) => onUpdateProject({ styles: { ...styles, headingUppercase: e.target.checked } })}
+                                id="headingUppercase"
+                            />
+                            <label htmlFor="headingUppercase" style={{ marginBottom: 0 }}>Uppercase Headings</label>
+                        </div>
+
+                        <div className="input-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <input
+                                type="checkbox"
+                                checked={styles.headingUnderline || false}
+                                onChange={(e) => onUpdateProject({ styles: { ...styles, headingUnderline: e.target.checked } })}
+                                id="headingUnderline"
+                            />
+                            <label htmlFor="headingUnderline" style={{ marginBottom: 0 }}>Underline Headings</label>
                         </div>
 
                         <h3>Colors</h3>
@@ -354,6 +474,46 @@ const ProjectEditor = ({
                                             </div>
                                         </>
                                     )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'skills' && (
+                    <div className="editor-section">
+                        <div className="section-header">
+                            <h3>Skills</h3>
+                            <button className="add-btn" onClick={() => setIsAddingSkill(true)}><Plus size={14} /> Add</button>
+                        </div>
+
+                        {isAddingSkill && (
+                            <div className="add-form" style={{ display: 'flex', gap: '5px' }}>
+                                <input
+                                    placeholder="New Skill"
+                                    value={newSkill}
+                                    onChange={e => setNewSkill(e.target.value)}
+                                    onKeyDown={e => e.key === 'Enter' && addSkill()}
+                                    style={{ marginBottom: 0 }}
+                                />
+                                <button onClick={addSkill} style={{ background: '#000', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}><Check size={14} /></button>
+                                <button onClick={() => setIsAddingSkill(false)} style={{ background: '#eee', border: 'none', borderRadius: '4px', cursor: 'pointer' }}><X size={14} /></button>
+                            </div>
+                        )}
+
+                        <div className="list-items">
+                            {(project.skills || []).map((skill, idx) => (
+                                <div key={idx} className="list-item" style={{ padding: '8px' }}>
+                                    <div className="item-order-controls">
+                                        <button onClick={() => onReorderSkills(idx, -1)} disabled={idx === 0}><ArrowUp size={12} /></button>
+                                        <button onClick={() => onReorderSkills(idx, 1)} disabled={idx === (project.skills.length - 1)}><ArrowDown size={12} /></button>
+                                    </div>
+                                    <div className="item-info">
+                                        <strong>{skill}</strong>
+                                    </div>
+                                    <div className="item-actions">
+                                        <button onClick={() => deleteSkill(idx)} className="delete"><Trash2 size={14} /></button>
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -529,7 +689,7 @@ const ProjectEditor = ({
                 .form-actions button { flex: 1; padding: 6px; cursor: pointer; }
                 .form-actions .cancel { background: #eee; border: none; }
             `}</style>
-        </div>
+        </div >
     );
 };
 

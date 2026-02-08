@@ -12,11 +12,31 @@ const fixOrphans = (text) => {
 
 const CVLayout = ({ data, styles = {}, isEditable = false, onEdit, onDelete, onMove, isMoving }) => {
     // Styles
-    const { imageShape = 'circle', nameUppercase = false, primaryColor = '#333', accentColor = '#666' } = styles;
+    const {
+        imageShape = 'circle',
+        nameUppercase = false,
+        primaryColor = '#333',
+        accentColor = '#666',
+        font = 'Inter',
+        nameLayout = 'single', // 'single' | 'two-line'
+        educationLayout = 'standard' // 'standard' | 'swapped'
+    } = styles;
     const containerRef = useRef(null);
 
     // Apply auto-fit logic
     useAutoFit(containerRef, data);
+
+    const sectionTitleStyle = {
+        color: primaryColor,
+        borderBottomColor: primaryColor,
+        fontSize: `${0.75 * (styles.headingScale || 1)}em`,
+        textTransform: styles.headingUppercase !== false ? 'uppercase' : 'none',
+        borderBottom: styles.headingUnderline ? `2px solid ${primaryColor}` : 'none',
+        paddingBottom: styles.headingUnderline ? '6px' : '0',
+        marginBottom: styles.headingUnderline ? '12px' : '10px',
+        display: 'block',
+        width: '100%'
+    };
 
     const renderCourses = () => {
         if (!data.courses || data.courses.length === 0) return null;
@@ -25,7 +45,7 @@ const CVLayout = ({ data, styles = {}, isEditable = false, onEdit, onDelete, onM
 
         return (
             <section className="cv-section">
-                <h2 className="cv-section-title" style={{ color: primaryColor, borderBottomColor: primaryColor }}>Kursy i Certyfikaty</h2>
+                <h2 className="cv-section-title" style={sectionTitleStyle}>Kursy i Certyfikaty</h2>
 
                 {mode === 'icons' ? (
                     <div className="cv-stickers-container">
@@ -56,7 +76,7 @@ const CVLayout = ({ data, styles = {}, isEditable = false, onEdit, onDelete, onM
     };
 
     return (
-        <div className="cv-container" ref={containerRef}>
+        <div className="cv-container" ref={containerRef} style={{ fontFamily: font }}>
             {/* Header */}
             <header className="cv-header">
                 {data.personalInfo.photoUrl && (
@@ -73,7 +93,30 @@ const CVLayout = ({ data, styles = {}, isEditable = false, onEdit, onDelete, onM
                 )}
 
                 <div className="cv-header-info">
-                    <h1 className="cv-name" style={{ textTransform: nameUppercase ? 'uppercase' : 'none' }}>{data.personalInfo.fullName}</h1>
+                    <h1 className="cv-name" style={{
+                        textTransform: nameUppercase ? 'uppercase' : 'none',
+                        lineHeight: nameLayout === 'two-line' ? '1.1' : '1',
+                        wordBreak: nameLayout === 'two-line' ? 'break-word' : 'normal',
+                        display: 'flex',
+                        flexDirection: nameLayout === 'two-line' ? 'column' : 'row',
+                        gap: nameLayout === 'two-line' ? '5px' : '10px'
+                    }}>
+                        {nameLayout === 'two-line' ? (
+                            (() => {
+                                const names = data.personalInfo.fullName.split(' ');
+                                const firstName = names[0];
+                                const lastName = names.slice(1).join(' ');
+                                return (
+                                    <>
+                                        <span style={{ fontWeight: '400', fontSize: `${2.5 * (styles.firstNameScale || 1)}rem` }}>{firstName}</span>
+                                        <span style={{ fontWeight: '700', fontSize: `${2.5 * (styles.lastNameScale || 1)}rem` }}>{lastName}</span>
+                                    </>
+                                );
+                            })()
+                        ) : (
+                            data.personalInfo.fullName
+                        )}
+                    </h1>
                     <div className="cv-role" style={{ position: 'relative', display: 'inline-block', color: accentColor }}>
                         {data.personalInfo.role}
                         {isEditable && (
@@ -133,16 +176,39 @@ const CVLayout = ({ data, styles = {}, isEditable = false, onEdit, onDelete, onM
                 <aside className="cv-sidebar">
                     {/* Education */}
                     <section className="cv-section">
-                        <h2 className="cv-section-title" style={{ color: primaryColor, borderBottomColor: primaryColor }}>Edukacja</h2>
+                        <h2 className="cv-section-title" style={sectionTitleStyle}>Edukacja</h2>
                         {data.education && data.education.map((edu, index) => (
                             <div key={index} className="cv-job-item">
-                                <div className="cv-job-role" style={{ color: accentColor }}>{edu.degree}</div>
-                                <div className="cv-job-company">{edu.school}</div>
+                                {educationLayout === 'swapped' ? (
+                                    <>
+                                        <div className="cv-job-role" style={{ color: accentColor }}>{edu.school}</div>
+                                        <div className="cv-job-company">{edu.degree}</div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="cv-job-role" style={{ color: accentColor }}>{edu.degree}</div>
+                                        <div className="cv-job-company">{edu.school}</div>
+                                    </>
+                                )}
                                 <div className="cv-job-date">{edu.year}</div>
                                 {edu.description && <div className="cv-job-desc">{fixOrphans(edu.description)}</div>}
                             </div>
                         ))}
                     </section>
+
+                    {/* Skills */}
+                    {data.skills && data.skills.length > 0 && (
+                        <section className="cv-section">
+                            <h2 className="cv-section-title" style={sectionTitleStyle}>Umiejętności</h2>
+                            <ul className="cv-skills-list">
+                                {data.skills.map((skill, index) => (
+                                    <li key={index} className="cv-skill-tag">
+                                        • {skill}
+                                    </li>
+                                ))}
+                            </ul>
+                        </section>
+                    )}
 
                     {/* Courses / Certificates */}
                     {renderCourses()}
@@ -153,7 +219,7 @@ const CVLayout = ({ data, styles = {}, isEditable = false, onEdit, onDelete, onM
                     {/* Summary */}
                     {data.summary && (
                         <section className="cv-section" style={{ position: 'relative' }}>
-                            <h2 className="cv-section-title" style={{ color: primaryColor, borderBottomColor: primaryColor }}>Podsumowanie</h2>
+                            <h2 className="cv-section-title" style={sectionTitleStyle}>Podsumowanie</h2>
                             {isEditable && (
                                 <button onClick={() => onEdit({ id: 'summary', description: data.summary, role: 'summary' })} className="no-print edit-btn-abs" title="Edytuj Podsumowanie">✏️</button>
                             )}
@@ -163,7 +229,7 @@ const CVLayout = ({ data, styles = {}, isEditable = false, onEdit, onDelete, onM
 
                     {/* Experience */}
                     <section className="cv-section">
-                        <h2 className="cv-section-title" style={{ color: primaryColor, borderBottomColor: primaryColor }}>Doświadczenie</h2>
+                        <h2 className="cv-section-title" style={sectionTitleStyle}>Doświadczenie</h2>
                         {data.experience && data.experience.map((job, index) => (
                             <div key={index} className="cv-job-item" style={{ position: 'relative' }}>
                                 {/* Inline controls for legacy editing - hidden if isEditable is false anyway */}
