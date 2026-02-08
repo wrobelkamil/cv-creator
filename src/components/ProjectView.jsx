@@ -3,46 +3,94 @@ import { supabase } from '../supabaseClient';
 import { useParams, Link } from 'react-router-dom';
 import CVLayout from './CVLayout';
 import ExperienceEditor from './ExperienceEditor';
-import GenericEditor from './GenericEditor';
+import ProjectEditor from './ProjectEditor'; // New Sidebar
 import { staticData } from '../data/staticData';
+import html2pdf from 'html2pdf.js';
 
 const ProjectView = ({ session }) => {
     const { projectId } = useParams();
     const [project, setProject] = useState(null);
     const [projectEntries, setProjectEntries] = useState([]);
+    const [userProfile, setUserProfile] = useState(null);
     const [isEditorOpen, setIsEditorOpen] = useState(false);
+    const [isDownloading, setIsDownloading] = useState(false);
 
-    // activeField: 'summary' | 'role' | 'portfolio' | null
-    const [activeField, setActiveField] = useState(null);
+    // For editing experience items via the modal
     const [editingEntry, setEditingEntry] = useState(null);
+
+    const [isMoving, setIsMoving] = useState(false);
 
     useEffect(() => {
         fetchProjectData();
+        fetchUserProfile();
 
         const channel = supabase
             .channel(`project:${projectId}`)
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'project_entries', filter: `project_id=eq.${projectId}` }, (payload) => {
-                fetchProjectData();
-            })
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'projects', filter: `id=eq.${projectId}` }, (payload) => {
-                fetchProjectData();
-            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'project_entries', filter: `project_id=eq.${projectId}` }, () => fetchProjectData())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'projects', filter: `id=eq.${projectId}` }, () => fetchProjectData())
             .subscribe();
 
         return () => { supabase.removeChannel(channel); };
     }, [projectId]);
 
+    const fetchUserProfile = async () => {
+        if (!session?.user) return;
+        const { data } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+        if (data) setUserProfile(data);
+    };
+
     const fetchProjectData = async () => {
         const { data: projData } = await supabase.from('projects').select('*').eq('id', projectId).single();
-        setProject(projData);
-
         const { data: entriesData } = await supabase
             .from('project_entries')
             .select('*')
             .eq('project_id', projectId)
-            .order('created_at', { ascending: false });
+            .order('sort_order', { ascending: true }) // Sort by sort_order first
+            .order('created_at', { ascending: false }); // Fallback to created_at
 
+        setProject(projData);
         if (entriesData) setProjectEntries(entriesData);
+    };
+
+    const updateProject = async (updates) => {
+        // Optimistic update
+        setProject(prev => ({ ...prev, ...updates }));
+
+        const { error } = await supabase
+            .from('projects')
+            .update(updates)
+            .eq('id', projectId);
+
+        if (error) {
+            console.error("Update failed", error);
+            fetchProjectData(); // Revert
+        }
+    };
+
+    // Reorder Education (Array in JSONB)
+    const reorderEducation = (fromIndex, direction) => {
+        if (!project?.education) return;
+        const toIndex = fromIndex + direction;
+        if (toIndex < 0 || toIndex >= project.education.length) return;
+
+        const newEdu = [...project.education];
+        const [movedItem] = newEdu.splice(fromIndex, 1);
+        newEdu.splice(toIndex, 0, movedItem);
+
+        updateProject({ education: newEdu });
+    };
+
+    // Reorder Courses (Array in JSONB)
+    const reorderCourses = (fromIndex, direction) => {
+        if (!project?.courses) return;
+        const toIndex = fromIndex + direction;
+        if (toIndex < 0 || toIndex >= project.courses.length) return;
+
+        const newCourses = [...project.courses];
+        const [movedItem] = newCourses.splice(fromIndex, 1);
+        newCourses.splice(toIndex, 0, movedItem);
+
+        updateProject({ courses: newCourses });
     };
 
     const deleteEntry = async (id) => {
@@ -57,8 +105,6 @@ const ProjectView = ({ session }) => {
         else fetchProjectData();
     };
 
-    const [isMoving, setIsMoving] = useState(false);
-
     const moveEntry = async (index, direction) => {
         if (isMoving) return;
         const newIndex = index + direction;
@@ -69,150 +115,228 @@ const ProjectView = ({ session }) => {
         const itemA = projectEntries[index];
         const itemB = projectEntries[newIndex];
 
-        // Parse timestamps
-        let timeA = new Date(itemA.created_at).getTime();
-        let timeB = new Date(itemB.created_at).getTime();
+        // Swap sort_order
+        // If sort_order is null, we might need to initialize it.
+        // Assuming sort_order exists for now or we use logic to swap their "order" field.
+        // The simplest way for SQL sort_order is to just swap the values.
 
-        // Swap values
-        const temp = timeA;
-        timeA = timeB;
-        timeB = temp;
+        // Let's rely on swapping the actual rows' sort_order values.
+        // But first, we need to ensure they HAVE sort_order.
+        // If not, we might need to assign them based on index.
 
-        // Handle collision or insufficient precision
-        if (timeA === timeB) {
-            // We want itemA (at newIndex) to be effectively sorted relative to itemB (at index)
-            // Order is DESC (Newer First).
-            // If newIndex < index (Moving Up): ItemA is above ItemB. ItemA must be NEWER (Larger Time).
-            if (newIndex < index) {
-                timeA += 1;
-            }
-            // If newIndex > index (Moving Down): ItemA is below ItemB. ItemA must be OLDER (Smaller Time).
-            else {
-                timeA -= 1;
-            }
+        let orderA = itemA.sort_order ?? index;
+        let orderB = itemB.sort_order ?? newIndex;
+
+        if (orderA === orderB) {
+            // Collision or uninitialized, force spread
+            orderA = index * 10;
+            orderB = newIndex * 10;
         }
 
-        // Convert back to ISO string
-        const newTimeA = new Date(timeA).toISOString();
-        const newTimeB = new Date(timeB).toISOString();
-
-        // Optimistic UI update
+        // Optimistic
         const newEntries = [...projectEntries];
-        newEntries[index] = itemB;
-        newEntries[newIndex] = itemA;
+        newEntries[index] = { ...itemB, sort_order: orderA };
+        newEntries[newIndex] = { ...itemA, sort_order: orderB }; // Swap positions visually
         setProjectEntries(newEntries);
 
         try {
             await Promise.all([
-                supabase
-                    .from('project_entries')
-                    .update({ created_at: newTimeA })
-                    .eq('id', itemA.id),
-                supabase
-                    .from('project_entries')
-                    .update({ created_at: newTimeB })
-                    .eq('id', itemB.id)
+                supabase.from('project_entries').update({ sort_order: orderB }).eq('id', itemA.id), // A takes B's place
+                supabase.from('project_entries').update({ sort_order: orderA }).eq('id', itemB.id)  // B takes A's place
             ]);
-
-            // Fetch strict fresh data to confirm headers/order
             await fetchProjectData();
         } catch (error) {
             console.error("Reorder failed:", error);
-            fetchProjectData(); // Revert on error
+            fetchProjectData();
         } finally {
             setIsMoving(false);
         }
     };
 
-    if (!project) return <div style={{ padding: '20px' }}>Loading Project...</div>;
+    const handleDownloadPDF = () => {
+        setIsDownloading(true);
+        const element = document.querySelector('.cv-container');
 
-    // Construct Data for CVLayout
+        // Construct filename: CV_[FirstName]_[ProjectName]
+        const firstName = project.full_name?.split(' ')[0] || 'Draft';
+        const sanitizedProjectName = project.name?.replace(/\s+/g, '_') || 'Project';
+        const fileName = `CV_${firstName}_${sanitizedProjectName}.pdf`;
+
+        const opt = {
+            margin: 0,
+            filename: fileName,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: {
+                scale: 2,
+                useCORS: true,
+                scrollY: 0,
+                windowHeight: element.scrollHeight // Capture full height
+            },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        // Temporarily hide "no-print" elements
+        const noPrintEls = document.querySelectorAll('.no-print');
+        noPrintEls.forEach(el => el.style.display = 'none');
+
+        // Force single page height to avoid overflow bleed causing blank page
+        const originalHeight = element.style.height;
+        const originalOverflow = element.style.overflow;
+
+        // Lock to A4 height (minus a tiny bit to be safe from rounding errors)
+        element.style.height = '296.8mm';
+        element.style.overflow = 'hidden';
+
+        html2pdf().set(opt).from(element).save().then(() => {
+            noPrintEls.forEach(el => el.style.display = '');
+            element.style.height = originalHeight || ''; // Restore
+            element.style.overflow = originalOverflow || ''; // Restore
+            setIsDownloading(false);
+        }).catch(err => {
+            console.error("PDF generation failed:", err);
+            noPrintEls.forEach(el => el.style.display = '');
+            element.style.height = originalHeight || ''; // Restore
+            element.style.overflow = originalOverflow || ''; // Restore
+            setIsDownloading(false);
+            alert("Could not generate PDF. Please try again.");
+        });
+    };
+
+    if (!project) return <div style={{ padding: '20px' }}>Loading...</div>;
+
+    // Construct Data using Fallbacks: Project -> Profile -> Static
+    // Helper to get fallback
+    const getVal = (field, subField = null) => {
+        // Map personalInfo fields to project columns
+        const fieldMap = {
+            fullName: 'full_name',
+            role: 'role',
+            email: 'email',
+            phone: 'phone',
+            location: 'location',
+            linkedin: 'linkedin',
+            portfolio: 'portfolio',
+            photoUrl: 'photo_url'
+        };
+
+        // 1. Project-specific value
+        if (field === 'personalInfo' && subField) {
+            const projectKey = fieldMap[subField] || subField;
+            if (project[projectKey]) return project[projectKey];
+        } else if (subField) {
+            if (project[field] && project[field][subField]) return project[field][subField];
+        } else {
+            if (project[field]) return project[field];
+        }
+
+        // 2. User Profile default
+        if (userProfile) {
+            // Mapping profile fields to project fields
+            // Profile has flat structure: full_name, email, etc.
+            if (field === 'personalInfo') {
+                if (subField === 'fullName') return userProfile.full_name;
+                if (subField === 'role') return userProfile.role;
+                if (subField === 'email') return userProfile.email;
+                if (subField === 'phone') return userProfile.phone;
+                if (subField === 'location') return userProfile.location;
+                if (subField === 'linkedin') return userProfile.linkedin;
+                if (subField === 'portfolio') return userProfile.portfolio;
+                if (subField === 'photoUrl') return userProfile.photo_url;
+            }
+            if (field === 'summary') return userProfile.summary;
+
+            // Arrays
+            if (field === 'education' && userProfile.education && userProfile.education.length > 0) return userProfile.education;
+            if (field === 'courses' && userProfile.courses && userProfile.courses.length > 0) return userProfile.courses;
+        }
+
+        // 3. Static Data (last resort)
+        if (subField) return staticData[field]?.[subField];
+        return staticData[field];
+    };
+
     const fullData = {
-        ...staticData,
         personalInfo: {
-            ...staticData.personalInfo,
-            role: project.role || staticData.personalInfo.role,
-            portfolio: project.portfolio || staticData.personalInfo.portfolio
+            fullName: getVal('personalInfo', 'fullName'),
+            role: getVal('personalInfo', 'role'),
+            email: getVal('personalInfo', 'email'),
+            phone: getVal('personalInfo', 'phone'),
+            location: getVal('personalInfo', 'location'),
+            linkedin: getVal('personalInfo', 'linkedin'),
+            portfolio: getVal('personalInfo', 'portfolio'),
+            photoUrl: getVal('personalInfo', 'photoUrl')
         },
-        summary: project.summary || staticData.summary,
-        experience: projectEntries.length > 0 ? projectEntries : [],
-        masterExperience: projectEntries,
+        summary: getVal('summary'),
+        experience: projectEntries, // Experience is always project specific
+        education: project.education && project.education.length > 0 ? project.education : (userProfile?.education || staticData.education),
+        skills: staticData.skills,
+        languages: staticData.languages,
+        courses: project.courses && project.courses.length > 0 ? project.courses : (userProfile?.courses || staticData.courses),
+        coursesDisplayMode: project.courses_display_mode || 'icons'
     };
 
     const copyToken = () => {
         navigator.clipboard.writeText(projectId);
-        alert("Project Token copied! Paste this into ChatGPT.");
+        alert("Project Token copied!");
     };
 
     return (
-        <div>
-            {/* Project Header Bar (No Print) */}
-            <div className="no-print" style={{
-                background: '#333', color: 'white', padding: '10px 20px',
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-            }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                    <Link to="/" style={{ color: '#aaa', textDecoration: 'none' }}>← Dashboard</Link>
-                    <span style={{ fontWeight: 'bold' }}>{project.name}</span>
+        <div style={{ display: 'flex' }}>
+            {/* Main Content Area */}
+            <div style={{ flexGrow: 1, paddingRight: '300px' }}> {/* Space for Sidebar */}
+
+                {/* Header Bar */}
+                <div className="no-print" style={{
+                    background: '#333', color: 'white', padding: '10px 20px',
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        <Link to="/" style={{ color: '#aaa', textDecoration: 'none' }}>← Dashboard</Link>
+                        <span style={{ fontWeight: 'bold' }}>{project.name}</span>
+                        {userProfile && <span style={{ fontSize: '0.8em', color: '#8f8' }}>✓ Profile Loaded</span>}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <button onClick={handleDownloadPDF} disabled={isDownloading} style={{ cursor: 'pointer', fontSize: '0.9em', background: '#4CAF50', border: 'none', color: 'white', padding: '5px 15px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            {isDownloading ? 'Generating...' : 'Download PDF'}
+                        </button>
+                        <button onClick={copyToken} style={{ cursor: 'pointer', fontSize: '0.8em', background: 'none', border: '1px solid #555', color: '#aaa', padding: '2px 8px', borderRadius: '4px' }}>Copy ID</button>
+                    </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span style={{ fontSize: '0.8em', color: '#aaa' }}>Project Token:</span>
-                    <code style={{ background: '#222', padding: '4px 8px', borderRadius: '4px', fontFamily: 'monospace' }}>{projectId}</code>
-                    <button onClick={copyToken} style={{ cursor: 'pointer', fontSize: '0.8em' }}>📋</button>
+
+                <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '20px', background: '#eef', minHeight: '100vh' }}>
+                    <CVLayout
+                        data={fullData}
+                        styles={project.styles || {}}
+                        isEditable={false} // Disable inline editing since we have sidebar
+                        onDelete={deleteEntry}
+                        onMove={moveEntry}
+                        isMoving={isMoving}
+                    />
                 </div>
             </div>
 
-            <CVLayout
-                data={fullData}
-                isEditable={true}
-                onEdit={(entry) => {
-                    if (['summary', 'role', 'portfolio'].includes(entry.role)) {
-                        setActiveField(entry.role);
-                    } else {
-                        setEditingEntry(entry);
-                        setIsEditorOpen(true);
-                    }
+            {/* Sidebar Editor */}
+            <ProjectEditor
+                project={project}
+                entries={projectEntries}
+                styles={project.styles || {}}
+                onUpdateProject={updateProject}
+                onEditEntry={(entry) => {
+                    setEditingEntry(entry);
+                    setIsEditorOpen(true);
                 }}
-                onDelete={deleteEntry}
-                onMove={moveEntry}
+                onDeleteEntry={deleteEntry}
+                onReorderEntries={moveEntry} // Pass handler for Exp
+                onReorderEducation={reorderEducation}
+                onReorderCourses={reorderCourses}
             />
 
-            {/* Floating Buttons */}
-            <div className="no-print" style={{ position: 'fixed', bottom: '20px', right: '20px', display: 'flex', flexDirection: 'column', gap: '15px', zIndex: 100 }}>
-                <button
-                    onClick={() => { setEditingEntry(null); setIsEditorOpen(true); }}
-                    style={{
-                        background: '#f59e0b', color: 'white', border: 'none', borderRadius: '50px',
-                        width: '60px', height: '60px', fontSize: '24px', cursor: 'pointer', boxShadow: '0 4px 10px rgba(0,0,0,0.3)'
-                    }}
-                    title="Add Entry Manually"
-                >
-                    ✏️
-                </button>
-            </div>
-
-            <style>{`@media print { .no-print { display: none !important; } }`}</style>
-
+            {/* Modal for Experience Editing (still useful for rich details) */}
             {isEditorOpen && (
                 <ExperienceEditor
                     projectId={projectId}
                     initialData={editingEntry}
                     onClose={() => { setIsEditorOpen(false); setEditingEntry(null); }}
-                    onSuccess={() => fetchProjectData()}
-                />
-            )}
-
-            {activeField && (
-                <GenericEditor
-                    projectId={projectId}
-                    field={activeField}
-                    label={activeField}
-                    initialValue={
-                        activeField === 'summary' ? (project.summary || staticData.summary) :
-                            activeField === 'role' ? (project.role || staticData.personalInfo.role) :
-                                activeField === 'portfolio' ? (project.portfolio || staticData.personalInfo.portfolio) : ''
-                    }
-                    onClose={() => setActiveField(null)}
                     onSuccess={() => fetchProjectData()}
                 />
             )}

@@ -1,8 +1,8 @@
 const https = require('https');
 
-const SUPABASE_URL = 'https://nkxsrltadfwuygqbybxc.supabase.co';
+const SUPABASE_URL = 'https://nkxsrltafwuygqbyebxc.supabase.co';
 const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5reHNybHRhZnd1eWdxYnllYnhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwOTQ0OTMsImV4cCI6MjA4NDY3MDQ5M30.ATmpNso-EcAgBlPxr3IcSoQuCrPK5wefV-zQNPjz5WU';
-const PROJECT_ID = '82cba8f6-6ed7-4c90-b99d-a23f13ce66ca';
+const PROJECT_ID = '82cba8f6-6ed7-4c90-b99d-a23f13ce66ca'; // Assuming this project ID is valid or I should use the one from list_projects
 
 const data = JSON.stringify({
     action: 'get_entries',
@@ -10,7 +10,7 @@ const data = JSON.stringify({
 });
 
 const options = {
-    hostname: 'nkxsrltadfwuygqbybxc.supabase.co',
+    hostname: 'nkxsrltafwuygqbyebxc.supabase.co',
     path: '/rest/v1/rpc/gpt_manage_entries',
     method: 'POST',
     headers: {

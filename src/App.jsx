@@ -3,6 +3,7 @@ import { supabase } from './supabaseClient';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Dashboard from './components/Dashboard';
 import ProjectView from './components/ProjectView';
+import ProfilePage from './components/ProfilePage';
 import AuthModal from './components/AuthModal';
 
 function App() {
@@ -35,6 +36,7 @@ function App() {
       ) : (
         <Routes>
           <Route path="/" element={<Dashboard session={session} />} />
+          <Route path="/profile" element={<ProfilePage session={session} />} />
           <Route path="/project/:projectId" element={<ProjectView session={session} />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>

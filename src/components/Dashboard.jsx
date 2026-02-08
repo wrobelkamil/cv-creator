@@ -24,18 +24,61 @@ const Dashboard = ({ session }) => {
     const createProject = async () => {
         if (!newProjectName.trim()) return;
 
-        const { data, error } = await supabase
+        // Try to fetch profile defaults
+        const { data: profile } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+
+        const newProjectData = {
+            name: newProjectName,
+            user_id: session.user.id,
+            // Copy default text fields if they exist
+            summary: profile?.summary,
+            role: profile?.role,
+            full_name: profile?.full_name,
+            email: profile?.email,
+            phone: profile?.phone,
+            location: profile?.location,
+            linkedin: profile?.linkedin,
+            portfolio: profile?.portfolio,
+            photo_url: profile?.photo_url,
+            // Arrays (JSONB)
+            education: profile?.education,
+            courses: profile?.courses
+        };
+
+        const { data: projData, error } = await supabase
             .from('projects')
-            .insert([{ name: newProjectName, user_id: session.user.id }])
-            .select();
+            .insert([newProjectData])
+            .select()
+            .single();
 
         if (error) {
             alert("Error creating project: " + error.message);
-        } else {
-            setNewProjectName('');
-            // Navigate automatically to the new project
-            navigate(`/project/${data[0].id}`);
+            return;
         }
+
+        const newProjectId = projData.id;
+
+        // Copy default experience as project_entries
+        if (profile?.experience && profile.experience.length > 0) {
+            const newEntries = profile.experience.map((entry, index) => ({
+                project_id: newProjectId,
+                user_id: session.user.id,
+                company: entry.company,
+                role: entry.role,
+                period: entry.period,
+                description: entry.description,
+                sort_order: index
+            }));
+
+            const { error: entriesError } = await supabase
+                .from('project_entries')
+                .insert(newEntries);
+
+            if (entriesError) console.error("Error copying experience:", entriesError);
+        }
+
+        setNewProjectName('');
+        navigate(`/project/${newProjectId}`);
     };
 
     const deleteProject = async (id, e) => {
@@ -71,7 +114,16 @@ const Dashboard = ({ session }) => {
                 user_id: session.user.id,
                 summary: project.summary,
                 portfolio: project.portfolio,
-                role: project.role
+                role: project.role,
+                full_name: project.full_name,
+                email: project.email,
+                phone: project.phone,
+                location: project.location,
+                linkedin: project.linkedin,
+                photo_url: project.photo_url,
+                education: project.education,
+                courses: project.courses,
+                courses_display_mode: project.courses_display_mode
             }])
             .select()
             .single();
@@ -93,11 +145,12 @@ const Dashboard = ({ session }) => {
         if (entries && entries.length > 0) {
             const newEntries = entries.map(entry => ({
                 project_id: newProjectId,
-                user_id: session.user.id, // ensure ownership
+                user_id: session.user.id,
                 company: entry.company,
                 role: entry.role,
                 period: entry.period,
-                description: entry.description
+                description: entry.description,
+                sort_order: entry.sort_order
             }));
 
             const { error: entriesError } = await supabase
@@ -114,7 +167,16 @@ const Dashboard = ({ session }) => {
         <div style={{ maxWidth: '800px', margin: '40px auto', fontFamily: 'Inter, sans-serif' }}>
             <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
                 <h1>🗂️ My CV Projects</h1>
-                <button onClick={() => supabase.auth.signOut()} style={{ padding: '8px 16px' }}>Logout</button>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    <Link to="/profile" style={{ textDecoration: 'none' }}>
+                        <button style={{ padding: '8px 16px', borderRadius: '4px', border: '1px solid #ccc', background: 'white', cursor: 'pointer' }}>
+                            ⚙️ Base Data (Settings)
+                        </button>
+                    </Link>
+                    <button onClick={() => supabase.auth.signOut()} style={{ padding: '8px 16px', borderRadius: '4px', border: 'none', background: '#333', color: 'white', cursor: 'pointer' }}>
+                        Logout
+                    </button>
+                </div>
             </header>
 
             <div style={{ background: '#f9f9f9', padding: '20px', borderRadius: '8px', marginBottom: '30px', display: 'flex', gap: '10px' }}>

@@ -1,0 +1,171 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "CV Project API",
+        "description": "API for managing CV experience entries, summary, portfolio, and role via Supabase RPC.",
+        "version": "1.4.0"
+    },
+    "servers": [
+        {
+            "url": "https://nkxsrltafwuygqbyebxc.supabase.co"
+        }
+    ],
+    "paths": {
+        "/rest/v1/rpc/gpt_manage_entries": {
+            "post": {
+                "operationId": "manageCV",
+                "summary": "Get or Update CV experience, summary, portfolio, and role.",
+                "description": "Reads current CV data or performs a FULL UPDATE (Replace) of entries, summary, portfolio, and role.",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "p_project_id": {
+                                        "type": "string",
+                                        "description": "The UUID Project Token."
+                                    },
+                                    "action": {
+                                        "type": "string",
+                                        "enum": [
+                                            "get_entries",
+                                            "update_entries"
+                                        ],
+                                        "description": "Action: 'get_entries' (Read) or 'update_entries' (Write/Replace)."
+                                    },
+                                    "p_summary": {
+                                        "type": "string",
+                                        "description": "Professional Summary text (optional for update)."
+                                    },
+                                    "p_portfolio": {
+                                        "type": "string",
+                                        "description": "Portfolio URL (optional for update)."
+                                    },
+                                    "p_role": {
+                                        "type": "string",
+                                        "description": "Job Title / Role (e.g. 'Senior Graphic Designer')."
+                                    },
+                                    "entries": {
+                                        "type": "array",
+                                        "description": "List of experience entries. WARNING: This REPLACES all existing entries.",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "company": {
+                                                    "type": "string"
+                                                },
+                                                "role": {
+                                                    "type": "string"
+                                                },
+                                                "period": {
+                                                    "type": "string"
+                                                },
+                                                "description": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "required": [
+                                    "p_project_id",
+                                    "action"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "full_name": {
+                                            "type": "string"
+                                        },
+                                        "role": {
+                                            "type": "string"
+                                        },
+                                        "summary": {
+                                            "type": "string"
+                                        },
+                                        "email": {
+                                            "type": "string"
+                                        },
+                                        "phone": {
+                                            "type": "string"
+                                        },
+                                        "location": {
+                                            "type": "string"
+                                        },
+                                        "linkedin": {
+                                            "type": "string"
+                                        },
+                                        "portfolio": {
+                                            "type": "string"
+                                        },
+                                        "skills": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "languages": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "education": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        },
+                                        "courses": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        },
+                                        "entries": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "company": {
+                                                        "type": "string"
+                                                    },
+                                                    "role": {
+                                                        "type": "string"
+                                                    },
+                                                    "period": {
+                                                        "type": "string"
+                                                    },
+                                                    "description": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

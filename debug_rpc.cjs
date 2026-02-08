@@ -1,4 +1,4 @@
-const SUPABASE_URL = 'https://nkxsrltadfwuygqbybxc.supabase.co';
+const SUPABASE_URL = 'https://nkxsrltafwuygqbyebxc.supabase.co';
 const SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2OTA5NDQ5MywiZXhwIjoyMDg0NjcwNDkzfQ.RBN7bTO3IpoQcxrPD0kIv4n1EIXrBlg3JKHml-c8Pqs';
 const PROJECT_ID = '82cba8f6-6ed7-4c90-b99d-a23f13ce66ca';
 

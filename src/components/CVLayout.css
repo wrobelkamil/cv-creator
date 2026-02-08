@@ -54,8 +54,7 @@
   height: 40mm;
   background: #f4f4f4;
   overflow: hidden;
-  border-radius: 50%;
-  /* Circle looks more modern */
+  /* Default handled by JS */
   border: 1px solid #ddd;
 }
 
