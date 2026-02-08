@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import './CVLayout.css';
 import useAutoFit from '../hooks/useAutoFit';
-import { MapPin, Phone, Mail, Globe, Linkedin, Award } from 'lucide-react';
+import { MapPin, Phone, Mail, Globe, Linkedin, Award, Github, Twitter, Link, Calendar, Flag, Home, Briefcase, User } from 'lucide-react';
 
 // Helper to fix orphans (hanging single letter words)
 const fixOrphans = (text) => {
@@ -165,6 +165,26 @@ const CVLayout = ({ data, styles = {}, isEditable = false, onEdit, onDelete, onM
                                 </a>
                             </span>
                         )}
+
+                        {/* Custom Contacts */}
+                        {data.custom_contacts && data.custom_contacts.map((contact, idx) => {
+                            const IconComponent = {
+                                Globe, Github, Linkedin, Twitter, Mail, Phone, MapPin, Link, Calendar, Flag, Home, Briefcase, User
+                            }[contact.icon] || Link;
+
+                            return (
+                                <span key={idx} className="cv-contact-item">
+                                    <IconComponent size={14} className="cv-icon" color={accentColor} />
+                                    {contact.value.startsWith('http') || contact.value.includes('@') ? (
+                                        <a href={contact.value.includes('@') ? `mailto:${contact.value}` : contact.value} target="_blank" rel="noreferrer">
+                                            {contact.value.replace(/^https?:\/\//, '')}
+                                        </a>
+                                    ) : (
+                                        <span>{contact.value}</span>
+                                    )}
+                                </span>
+                            );
+                        })}
                     </div>
                 </div>
             </header>

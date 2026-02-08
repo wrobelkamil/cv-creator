@@ -31,40 +31,46 @@
                                         "type": "string",
                                         "enum": [
                                             "get_entries",
-                                            "update_entries"
+                                            "update_skills",
+                                            "update_profile",
+                                            "add_entry",
+                                            "update_entry",
+                                            "delete_entry"
                                         ],
-                                        "description": "Action: 'get_entries' (Read) or 'update_entries' (Write/Replace)."
+                                        "description": "Action to perform."
                                     },
-                                    "p_summary": {
-                                        "type": "string",
-                                        "description": "Professional Summary text (optional for update)."
-                                    },
-                                    "p_portfolio": {
-                                        "type": "string",
-                                        "description": "Portfolio URL (optional for update)."
-                                    },
-                                    "p_role": {
-                                        "type": "string",
-                                        "description": "Job Title / Role (e.g. 'Senior Graphic Designer')."
-                                    },
-                                    "entries": {
-                                        "type": "array",
-                                        "description": "List of experience entries. WARNING: This REPLACES all existing entries.",
-                                        "items": {
-                                            "type": "object",
-                                            "properties": {
-                                                "company": {
+                                    "p_entry_data": {
+                                        "type": "object",
+                                        "description": "Payload for the action. For 'update_skills', pass array of strings. For 'update_profile', pass object with summary, role, etc. For 'add/update_entry', pass experience object.",
+                                        "properties": {
+                                            "skills": {
+                                                "type": "array",
+                                                "items": {
                                                     "type": "string"
                                                 },
-                                                "role": {
-                                                    "type": "string"
-                                                },
-                                                "period": {
-                                                    "type": "string"
-                                                },
-                                                "description": {
-                                                    "type": "string"
-                                                }
+                                                "description": "List of skills (for update_skills)."
+                                            },
+                                            "role": {
+                                                "type": "string"
+                                            },
+                                            "company": {
+                                                "type": "string"
+                                            },
+                                            "period": {
+                                                "type": "string"
+                                            },
+                                            "description": {
+                                                "type": "string"
+                                            },
+                                            "summary": {
+                                                "type": "string"
+                                            },
+                                            "portfolio": {
+                                                "type": "string"
+                                            },
+                                            "id": {
+                                                "type": "string",
+                                                "description": "UUID of entry to update/delete."
                                             }
                                         }
                                     }

@@ -69,11 +69,14 @@ const ProjectView = ({ session }) => {
 
     // Reorder Education (Array in JSONB)
     const reorderEducation = (fromIndex, direction) => {
-        if (!project?.education) return;
-        const toIndex = fromIndex + direction;
-        if (toIndex < 0 || toIndex >= project.education.length) return;
+        let current = project?.education;
+        if (typeof current === 'string') { try { current = JSON.parse(current); } catch (e) { current = []; } }
+        if (!Array.isArray(current)) return;
 
-        const newEdu = [...project.education];
+        const toIndex = fromIndex + direction;
+        if (toIndex < 0 || toIndex >= current.length) return;
+
+        const newEdu = [...current];
         const [movedItem] = newEdu.splice(fromIndex, 1);
         newEdu.splice(toIndex, 0, movedItem);
 
@@ -82,11 +85,14 @@ const ProjectView = ({ session }) => {
 
     // Reorder Courses (Array in JSONB)
     const reorderCourses = (fromIndex, direction) => {
-        if (!project?.courses) return;
-        const toIndex = fromIndex + direction;
-        if (toIndex < 0 || toIndex >= project.courses.length) return;
+        let current = project?.courses;
+        if (typeof current === 'string') { try { current = JSON.parse(current); } catch (e) { current = []; } }
+        if (!Array.isArray(current)) return;
 
-        const newCourses = [...project.courses];
+        const toIndex = fromIndex + direction;
+        if (toIndex < 0 || toIndex >= current.length) return;
+
+        const newCourses = [...current];
         const [movedItem] = newCourses.splice(fromIndex, 1);
         newCourses.splice(toIndex, 0, movedItem);
 
@@ -95,11 +101,14 @@ const ProjectView = ({ session }) => {
 
     // Reorder Skills (Array in JSONB)
     const reorderSkills = (fromIndex, direction) => {
-        if (!project?.skills) return;
-        const toIndex = fromIndex + direction;
-        if (toIndex < 0 || toIndex >= project.skills.length) return;
+        let current = project?.skills;
+        if (typeof current === 'string') { try { current = JSON.parse(current); } catch (e) { current = []; } }
+        if (!Array.isArray(current)) return;
 
-        const newSkills = [...project.skills];
+        const toIndex = fromIndex + direction;
+        if (toIndex < 0 || toIndex >= current.length) return;
+
+        const newSkills = [...current];
         const [movedItem] = newSkills.splice(fromIndex, 1);
         newSkills.splice(toIndex, 0, movedItem);
 
@@ -287,7 +296,19 @@ const ProjectView = ({ session }) => {
         skills: project.skills && project.skills.length > 0 ? project.skills : (userProfile?.skills || staticData.skills),
         languages: staticData.languages,
         courses: project.courses && project.courses.length > 0 ? project.courses : (userProfile?.courses || staticData.courses),
-        coursesDisplayMode: project.courses_display_mode || 'icons'
+        coursesDisplayMode: project.courses_display_mode || 'icons',
+        custom_contacts: project.custom_contacts || [],
+        // Safely handle skills (parse if string, default to array)
+        skills: (() => {
+            let s = project.skills;
+            if (typeof s === 'string') {
+                try { s = JSON.parse(s); } catch (e) { s = []; }
+            }
+            if (!Array.isArray(s) || s.length === 0) {
+                s = userProfile?.skills || staticData.skills;
+            }
+            return Array.isArray(s) ? s : [];
+        })()
     };
 
     const copyToken = () => {
@@ -332,7 +353,7 @@ const ProjectView = ({ session }) => {
 
             {/* Sidebar Editor */}
             <ProjectEditor
-                project={project}
+                project={{ ...project, skills: fullData.skills }}
                 entries={projectEntries}
                 styles={project.styles || {}}
                 onUpdateProject={updateProject}

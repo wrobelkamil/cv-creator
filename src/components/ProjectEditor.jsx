@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
-import { Upload, Plus, Trash2, Edit2, X, Check, ArrowUp, ArrowDown } from 'lucide-react';
+import { Upload, Plus, Trash2, Edit2, X, Check, ArrowUp, ArrowDown, Github, Twitter, Linkedin, Globe, Mail, Phone, MapPin, Link, Calendar, Flag, Home, Briefcase, User } from 'lucide-react';
 
 const ProjectEditor = ({
     project,
@@ -138,6 +138,24 @@ const ProjectEditor = ({
         onUpdateProject({ skills: updated });
     };
 
+    // --- Custom Contact Handlers ---
+    const addCustomContact = () => {
+        const current = project.custom_contacts || [];
+        onUpdateProject({ custom_contacts: [...current, { icon: 'Link', value: '' }] });
+    };
+
+    const updateCustomContact = (index, field, value) => {
+        const current = [...(project.custom_contacts || [])];
+        current[index] = { ...current[index], [field]: value };
+        onUpdateProject({ custom_contacts: current });
+    };
+
+    const removeCustomContact = (index) => {
+        const current = project.custom_contacts || [];
+        const updated = current.filter((_, i) => i !== index);
+        onUpdateProject({ custom_contacts: updated });
+    };
+
     const importDefaultExperience = async () => {
         if (!window.confirm("Import default experience? This will append to your current list.")) return;
 
@@ -217,6 +235,43 @@ const ProjectEditor = ({
                         <div className="input-group">
                             <label>Portfolio</label>
                             <input type="text" value={project.portfolio || ''} onChange={(e) => handleInputChange(e, 'portfolio')} />
+                        </div>
+
+                        <h4>Custom Contacts</h4>
+                        <div className="list-items">
+                            {(project.custom_contacts || []).map((item, idx) => (
+                                <div key={idx} className="list-item" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '5px' }}>
+                                    <div style={{ display: 'flex', width: '100%', gap: '5px' }}>
+                                        <select
+                                            value={item.icon}
+                                            onChange={(e) => updateCustomContact(idx, 'icon', e.target.value)}
+                                            style={{ flex: 1, padding: '5px' }}
+                                        >
+                                            <option value="Globe">Globe</option>
+                                            <option value="Github">Github</option>
+                                            <option value="Linkedin">Linkedin</option>
+                                            <option value="Twitter">Twitter</option>
+                                            <option value="Mail">Mail</option>
+                                            <option value="Phone">Phone</option>
+                                            <option value="MapPin">MapPin</option>
+                                            <option value="Link">Link</option>
+                                            <option value="Calendar">Calendar</option>
+                                            <option value="Flag">Flag</option>
+                                            <option value="Home">Home</option>
+                                            <option value="Briefcase">Briefcase</option>
+                                            <option value="User">User</option>
+                                        </select>
+                                        <button onClick={() => removeCustomContact(idx)} className="delete"><Trash2 size={14} /></button>
+                                    </div>
+                                    <input
+                                        placeholder="Value / URL"
+                                        value={item.value}
+                                        onChange={(e) => updateCustomContact(idx, 'value', e.target.value)}
+                                        style={{ width: '100%', boxSizing: 'border-box' }}
+                                    />
+                                </div>
+                            ))}
+                            <button className="add-btn" onClick={addCustomContact} style={{ marginTop: '10px' }}><Plus size={14} /> Add Item</button>
                         </div>
 
                         <h3>Summary</h3>
