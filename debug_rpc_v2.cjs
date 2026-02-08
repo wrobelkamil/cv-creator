@@ -6,18 +6,36 @@ async function testConnection() {
     console.log('Testing Supabase RPC with CORRECT URL...');
 
     try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/gpt_manage_entries`, {
+        // 1. Get Entries
+        console.log("--- TEST 1: Get Entries ---");
+        const res1 = await fetch(`${SUPABASE_URL}/rest/v1/rpc/gpt_manage_entries`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'apikey': SERVICE_KEY,
-                'Authorization': `Bearer ${SERVICE_KEY}`
-            },
-            body: JSON.stringify({
-                action: 'get_entries',
-                p_project_id: PROJECT_ID
-            })
+            headers: { 'Content-Type': 'application/json', 'apikey': SERVICE_KEY, 'Authorization': `Bearer ${SERVICE_KEY}` },
+            body: JSON.stringify({ action: 'get_entries', p_project_id: PROJECT_ID })
         });
+        const json1 = await res1.json();
+        console.log("Get Response:", JSON.stringify(json1, null, 2));
+
+        // 2. Update Skills
+        console.log("\n--- TEST 2: Update Skills ---");
+        const newSkills = ["Node.js", "React", "Supabase", "AI"];
+        const res2 = await fetch(`${SUPABASE_URL}/rest/v1/rpc/gpt_manage_entries`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'apikey': SERVICE_KEY, 'Authorization': `Bearer ${SERVICE_KEY}` },
+            body: JSON.stringify({ action: 'update_skills', p_project_id: PROJECT_ID, p_entry_data: newSkills })
+        });
+        const json2 = await res2.json();
+        console.log("Update Response:", JSON.stringify(json2, null, 2));
+
+        // 3. Verify
+        console.log("\n--- TEST 3: Verify Update ---");
+        const res3 = await fetch(`${SUPABASE_URL}/rest/v1/rpc/gpt_manage_entries`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'apikey': SERVICE_KEY, 'Authorization': `Bearer ${SERVICE_KEY}` },
+            body: JSON.stringify({ action: 'get_entries', p_project_id: PROJECT_ID })
+        });
+        const json3 = await res3.json();
+        console.log("Verify Response:", JSON.stringify(json3.skills, null, 2));
 
         const text = await response.text();
         console.log(`Status: ${response.status}`);
