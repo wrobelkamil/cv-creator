@@ -123,7 +123,10 @@ const Dashboard = ({ session }) => {
                 photo_url: project.photo_url,
                 education: project.education,
                 courses: project.courses,
-                courses_display_mode: project.courses_display_mode
+                courses_display_mode: project.courses_display_mode,
+                skills: project.skills,
+                styles: project.styles,
+                custom_contacts: project.custom_contacts
             }])
             .select()
             .single();

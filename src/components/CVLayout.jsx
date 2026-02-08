@@ -27,15 +27,24 @@ const CVLayout = ({ data, styles = {}, isEditable = false, onEdit, onDelete, onM
     useAutoFit(containerRef, data);
 
     const sectionTitleStyle = {
-        color: primaryColor,
-        borderBottomColor: primaryColor,
+        color: styles.headerBackground ? (styles.headerTextColor || primaryColor) : primaryColor,
+        ...(styles.headerBackground ? {
+            background: styles.headerBackgroundColor || '#f5f5f5',
+            padding: '4px 8px',
+            borderRadius: `${styles.headerBorderRadius !== undefined ? styles.headerBorderRadius : 4}px`,
+            display: 'inline-block',
+            width: 'auto',
+            marginBottom: '10px'
+        } : {
+            display: 'block',
+            width: '100%',
+            borderBottom: styles.headingUnderline ? `2px solid ${primaryColor}` : 'none',
+            paddingBottom: styles.headingUnderline ? '6px' : '0',
+            marginBottom: styles.headingUnderline ? '12px' : '10px'
+        }),
         fontSize: `${0.75 * (styles.headingScale || 1)}em`,
         textTransform: styles.headingUppercase !== false ? 'uppercase' : 'none',
-        borderBottom: styles.headingUnderline ? `2px solid ${primaryColor}` : 'none',
-        paddingBottom: styles.headingUnderline ? '6px' : '0',
-        marginBottom: styles.headingUnderline ? '12px' : '10px',
-        display: 'block',
-        width: '100%'
+        borderBottomColor: primaryColor // Keep for color reference if needed
     };
 
     const renderCourses = () => {

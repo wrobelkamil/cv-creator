@@ -410,6 +410,64 @@ const ProjectEditor = ({
                             <label htmlFor="headingUnderline" style={{ marginBottom: 0 }}>Underline Headings</label>
                         </div>
 
+                        <div className="input-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <input
+                                type="checkbox"
+                                checked={styles.headerBackground || false}
+                                onChange={(e) => onUpdateProject({ styles: { ...styles, headerBackground: e.target.checked } })}
+                                id="headerBackground"
+                            />
+                            <label htmlFor="headerBackground" style={{ marginBottom: 0 }}>Background Style</label>
+                        </div>
+
+                        {styles.headerBackground && (
+                            <div style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '15px' }}>
+                                <div className="input-group">
+                                    <label>Background Color</label>
+                                    <div style={{ display: 'flex', gap: '10px' }}>
+                                        <input
+                                            type="color"
+                                            value={styles.headerBackgroundColor || '#f5f5f5'}
+                                            onChange={(e) => onUpdateProject({ styles: { ...styles, headerBackgroundColor: e.target.value } })}
+                                        />
+                                        <input
+                                            type="text"
+                                            value={styles.headerBackgroundColor || '#f5f5f5'}
+                                            onChange={(e) => onUpdateProject({ styles: { ...styles, headerBackgroundColor: e.target.value } })}
+                                            style={{ flex: 1 }}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="input-group">
+                                    <label>Text Color</label>
+                                    <div style={{ display: 'flex', gap: '10px' }}>
+                                        <input
+                                            type="color"
+                                            value={styles.headerTextColor || styles.primaryColor || '#333333'}
+                                            onChange={(e) => onUpdateProject({ styles: { ...styles, headerTextColor: e.target.value } })}
+                                        />
+                                        <input
+                                            type="text"
+                                            value={styles.headerTextColor || styles.primaryColor || '#333333'}
+                                            onChange={(e) => onUpdateProject({ styles: { ...styles, headerTextColor: e.target.value } })}
+                                            style={{ flex: 1 }}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="input-group">
+                                    <label>Border Radius ({styles.headerBorderRadius || 4}px)</label>
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max="20"
+                                        value={styles.headerBorderRadius !== undefined ? styles.headerBorderRadius : 4}
+                                        onChange={(e) => onUpdateProject({ styles: { ...styles, headerBorderRadius: parseInt(e.target.value) } })}
+                                        style={{ width: '100%' }}
+                                    />
+                                </div>
+                            </div>
+                        )}
+
                         <h3>Colors</h3>
 
                         <div className="input-group">
