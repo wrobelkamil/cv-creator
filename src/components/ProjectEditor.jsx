@@ -289,6 +289,28 @@ const ProjectEditor = ({
                         <h3>Appearance</h3>
 
                         <div className="input-group">
+                            <label>CV Language</label>
+                            <select
+                                value={styles.language || 'pl'}
+                                onChange={(e) => onUpdateProject({ styles: { ...styles, language: e.target.value } })}
+                                style={{ width: '100%', padding: '8px' }}
+                            >
+                                <option value="pl">Polski</option>
+                                <option value="en">English</option>
+                            </select>
+                        </div>
+
+                        <div className="input-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <input
+                                type="checkbox"
+                                checked={styles.showPhoto !== false}
+                                onChange={(e) => onUpdateProject({ styles: { ...styles, showPhoto: e.target.checked } })}
+                                id="showPhoto"
+                            />
+                            <label htmlFor="showPhoto" style={{ marginBottom: 0 }}>Show Photo</label>
+                        </div>
+
+                        <div className="input-group">
                             <label>Profile Photo Shape</label>
                             <select
                                 value={styles.imageShape || 'circle'}

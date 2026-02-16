@@ -10,6 +10,25 @@ const fixOrphans = (text) => {
     return text.replace(/ ([aiouwzAIOUWZ]) /g, ' $1\u00A0');
 };
 
+const LABELS = {
+    pl: {
+        education: 'Edukacja',
+        skills: 'Umiejętności',
+        courses: 'Kursy i Certyfikaty',
+        summary: 'Podsumowanie',
+        experience: 'Doświadczenie',
+        rodo: 'Wyrażam zgodę na przetwarzanie moich danych osobowych dla potrzeb niezbędnych do realizacji procesu rekrutacji (zgodnie z ustawą z dnia 10 maja 2018 roku o ochronie danych osobowych (Dz. Ustaw z 2018, poz. 1000) oraz zgodnie z Rozporządzeniem Parlamentu Europejskiego i Rady (UE) 2016/679 z dnia 27 kwietnia 2016 r. w sprawie ochrony osób fizycznych w związku z przetwarzaniem danych osobowych i w sprawie swobodnego przepływu takich danych oraz uchylenia dyrektywy 95/46/WE (RODO)).'
+    },
+    en: {
+        education: 'Education',
+        skills: 'Skills',
+        courses: 'Courses & Certificates',
+        summary: 'Summary',
+        experience: 'Experience',
+        rodo: 'I consent to the processing of my personal data for the purposes of the recruitment process in accordance with the General Data Protection Regulation (GDPR) of 27 April 2016 (EU 2016/679).'
+    }
+};
+
 const CVLayout = ({ data, styles = {}, isEditable = false, onEdit, onDelete, onMove, isMoving }) => {
     // Styles
     const {
@@ -21,6 +40,10 @@ const CVLayout = ({ data, styles = {}, isEditable = false, onEdit, onDelete, onM
         nameLayout = 'single', // 'single' | 'two-line'
         educationLayout = 'standard' // 'standard' | 'swapped'
     } = styles;
+
+    const lang = styles.language || 'pl';
+    const labels = LABELS[lang] || LABELS.pl;
+    const showPhoto = styles.showPhoto !== false; // default true
     const containerRef = useRef(null);
 
     // Apply auto-fit logic
@@ -54,7 +77,7 @@ const CVLayout = ({ data, styles = {}, isEditable = false, onEdit, onDelete, onM
 
         return (
             <section className="cv-section">
-                <h2 className="cv-section-title" style={sectionTitleStyle}>Kursy i Certyfikaty</h2>
+                <h2 className="cv-section-title" style={sectionTitleStyle}>{labels.courses}</h2>
 
                 {mode === 'icons' ? (
                     <div className="cv-stickers-container">
@@ -88,7 +111,7 @@ const CVLayout = ({ data, styles = {}, isEditable = false, onEdit, onDelete, onM
         <div className="cv-container" ref={containerRef} style={{ fontFamily: font }}>
             {/* Header */}
             <header className="cv-header">
-                {data.personalInfo.photoUrl && (
+                {showPhoto && data.personalInfo.photoUrl && (
                     <div
                         className="cv-photo-wrapper"
                         style={{ borderRadius: imageShape === 'circle' ? '50%' : imageShape === 'rounded' ? '15px' : '0' }}
@@ -205,7 +228,7 @@ const CVLayout = ({ data, styles = {}, isEditable = false, onEdit, onDelete, onM
                 <aside className="cv-sidebar">
                     {/* Education */}
                     <section className="cv-section">
-                        <h2 className="cv-section-title" style={sectionTitleStyle}>Edukacja</h2>
+                        <h2 className="cv-section-title" style={sectionTitleStyle}>{labels.education}</h2>
                         {data.education && data.education.map((edu, index) => (
                             <div key={index} className="cv-job-item">
                                 {educationLayout === 'swapped' ? (
@@ -228,7 +251,7 @@ const CVLayout = ({ data, styles = {}, isEditable = false, onEdit, onDelete, onM
                     {/* Skills */}
                     {data.skills && data.skills.length > 0 && (
                         <section className="cv-section">
-                            <h2 className="cv-section-title" style={sectionTitleStyle}>Umiejętności</h2>
+                            <h2 className="cv-section-title" style={sectionTitleStyle}>{labels.skills}</h2>
                             <ul className="cv-skills-list">
                                 {data.skills.map((skill, index) => (
                                     <li key={index} className="cv-skill-tag">
@@ -248,7 +271,7 @@ const CVLayout = ({ data, styles = {}, isEditable = false, onEdit, onDelete, onM
                     {/* Summary */}
                     {data.summary && (
                         <section className="cv-section" style={{ position: 'relative' }}>
-                            <h2 className="cv-section-title" style={sectionTitleStyle}>Podsumowanie</h2>
+                            <h2 className="cv-section-title" style={sectionTitleStyle}>{labels.summary}</h2>
                             {isEditable && (
                                 <button onClick={() => onEdit({ id: 'summary', description: data.summary, role: 'summary' })} className="no-print edit-btn-abs" title="Edytuj Podsumowanie">✏️</button>
                             )}
@@ -258,7 +281,7 @@ const CVLayout = ({ data, styles = {}, isEditable = false, onEdit, onDelete, onM
 
                     {/* Experience */}
                     <section className="cv-section">
-                        <h2 className="cv-section-title" style={sectionTitleStyle}>Doświadczenie</h2>
+                        <h2 className="cv-section-title" style={sectionTitleStyle}>{labels.experience}</h2>
                         {data.experience && data.experience.map((job, index) => (
                             <div key={index} className="cv-job-item" style={{ position: 'relative' }}>
                                 {/* Inline controls for legacy editing - hidden if isEditable is false anyway */}
@@ -291,7 +314,7 @@ const CVLayout = ({ data, styles = {}, isEditable = false, onEdit, onDelete, onM
 
             {/* Footer (RODO) */}
             <footer className="cv-footer">
-                Wyrażam zgodę na przetwarzanie moich danych osobowych dla potrzeb niezbędnych do realizacji procesu rekrutacji (zgodnie z ustawą z dnia 10 maja 2018 roku o ochronie danych osobowych (Dz. Ustaw z 2018, poz. 1000) oraz zgodnie z Rozporządzeniem Parlamentu Europejskiego i Rady (UE) 2016/679 z dnia 27 kwietnia 2016 r. w sprawie ochrony osób fizycznych w związku z przetwarzaniem danych osobowych i w sprawie swobodnego przepływu takich danych oraz uchylenia dyrektywy 95/46/WE (RODO)).
+                {labels.rodo}
             </footer>
 
             <style>{`
